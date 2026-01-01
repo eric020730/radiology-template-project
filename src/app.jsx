@@ -23,7 +23,7 @@ export function App() {
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
     
-    // Google Sheets 配置
+    // Google Sheets 配置 (包含 scriptUrl)
     const [config, setConfig] = useState({
         spreadsheetId: '',
         apiKey: '',
@@ -43,11 +43,11 @@ export function App() {
     }, []);
 
     // 儲存到本地
-    const saveToLocal = (left, right) => {
+    const saveToLocal = (left, right, currentConfig = config) => {
         const data = {
             leftTemplates: left,
             rightTemplates: right,
-            config: config,
+            config: currentConfig,
             lastUpdated: new Date().toISOString()
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -63,13 +63,11 @@ export function App() {
         try {
             setSyncStatus('匯入中...');
             
-            // 讀取左側組套
             const leftResponse = await fetch(
                 `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/左側組套!A2:C?key=${config.apiKey}`
             );
             const leftData = await leftResponse.json();
             
-            // 讀取右側組套
             const rightResponse = await fetch(
                 `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/右側組套!A2:C?key=${config.apiKey}`
             );
@@ -108,10 +106,10 @@ export function App() {
         }
     };
 
-    // 匯出到 Google Sheets（使用 Apps Script）
+    // 匯出到 Google Sheets (需要用到 scriptUrl)
     const exportToGoogleSheets = async () => {
-        if (!config.spreadsheetId || !config.scriptUrl) {
-            alert('需要設定 Apps Script 網址才能匯出。');
+        if (!config.scriptUrl) {
+            alert('請在設定中填寫 Apps Script 網址才能匯出。');
             return;
         }
 
@@ -132,13 +130,13 @@ export function App() {
             });
 
             setSyncStatus('匯出成功！');
-            alert('✅ 組套資料已成功匯出到 Google Sheets！');
+            alert('✅ 資料已發送！\n請至 Google 表格確認是否已更新。');
             setTimeout(() => setSyncStatus('已連接'), 2000);
             
         } catch (error) {
             console.error('匯出失敗:', error);
             setSyncStatus('匯出失敗');
-            alert('❌ 匯出失敗');
+            alert('❌ 匯出失敗，請檢查 Script 網址與權限。');
         }
     };
 
@@ -208,7 +206,7 @@ export function App() {
         }
         const newConfig = { ...config, isConnected: true };
         setConfig(newConfig);
-        saveToLocal(leftTemplates, rightTemplates);
+        saveToLocal(leftTemplates, rightTemplates, newConfig);
         await loadFromGoogleSheets();
         alert('✅ 已成功連接 Google Sheets！');
         setShowSettings(false);
@@ -268,7 +266,7 @@ export function App() {
                     </div>
                 </div>
 
-                {/* 設定面板 */}
+                {/* 設定面板 (已加回 Apps Script 網址) */}
                 {showSettings && (
                     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h2 className="text-xl font-bold mb-4">Google Sheets 設定</h2>
@@ -293,17 +291,35 @@ export function App() {
                                     className="w-full px-4 py-2 border rounded-lg outline-none"
                                 />
                             </div>
+                            {/* 👇 加回來的 Apps Script 網址欄位 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Apps Script 網址 (匯出功能必填)</label>
+                                <input
+                                    type="text"
+                                    value={config.scriptUrl}
+                                    onChange={(e) => setConfig({...config, scriptUrl: e.target.value})}
+                                    placeholder="https://script.google.com/macros/s/..."
+                                    className="w-full px-4 py-2 border rounded-lg outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">需貼上 Apps Script 部署後的「網頁應用程式」網址。</p>
+                            </div>
                             <div className="flex gap-3">
                                 <button onClick={connectGoogleSheets} className="px-4 py-2 bg-blue-600 text-white rounded-lg">連接</button>
                                 <button onClick={() => setShowSettings(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">取消</button>
                             </div>
+                            
+                            {config.isConnected && (
+                                <div className="mt-6 pt-6 border-t flex gap-3">
+                                    <button onClick={loadFromGoogleSheets} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2">📥 匯入資料</button>
+                                    <button onClick={exportToGoogleSheets} className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center justify-center gap-2">📤 匯出資料</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
 
                 {/* 主要按鈕區域 */}
                 <div className="grid md:grid-cols-2 gap-6">
-                    {/* 左側組套 */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-xl font-bold mb-4 text-gray-800">預設組套</h2>
                         <div className="space-y-3">
@@ -313,7 +329,6 @@ export function App() {
                         </div>
                     </div>
 
-                    {/* 右側組套 - 已移除所有刪除按鈕 */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-gray-800">自訂組套</h2>
@@ -337,7 +352,7 @@ export function App() {
                     </div>
                 </div>
 
-                {/* 編輯對話框 - 僅保留儲存與取消 */}
+                {/* 編輯對話框 */}
                 {editingTemplate && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
