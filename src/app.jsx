@@ -23,7 +23,7 @@ export function App() {
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
     
-    // Google Sheets 配置 (包含 scriptUrl)
+    // Google Sheets 配置
     const [config, setConfig] = useState({
         spreadsheetId: '',
         apiKey: '',
@@ -53,7 +53,7 @@ export function App() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     };
 
-    // 從 Google Sheets 載入資料
+    // 從 Google Sheets 載入資料 (修正了 ID 重複的問題)
     const loadFromGoogleSheets = async () => {
         if (!config.spreadsheetId || !config.apiKey) {
             alert('請先設定 Google Sheets ID 和 API Key');
@@ -73,9 +73,10 @@ export function App() {
             );
             const rightData = await rightResponse.json();
 
+            // 加入 index 確保 ID 絕對唯一
             if (leftData.values) {
-                const loadedLeft = leftData.values.map(row => ({
-                    id: row[0] || `temp-${Date.now()}`,
+                const loadedLeft = leftData.values.map((row, index) => ({
+                    id: row[0] || `left-${index}-${Date.now()}`, 
                     name: row[1] || '',
                     content: row[2] || ''
                 }));
@@ -83,8 +84,8 @@ export function App() {
             }
 
             if (rightData.values) {
-                const loadedRight = rightData.values.map(row => ({
-                    id: row[0] || `custom-${Date.now()}`,
+                const loadedRight = rightData.values.map((row, index) => ({
+                    id: row[0] || `right-${index}-${Date.now()}`,
                     name: row[1] || '',
                     content: row[2] || ''
                 }));
@@ -92,28 +93,19 @@ export function App() {
             }
 
             setSyncStatus('匯入成功！');
-            saveToLocal(
-                leftData.values ? leftData.values.map(row => ({ id: row[0], name: row[1], content: row[2] })) : leftTemplates,
-                rightData.values ? rightData.values.map(row => ({ id: row[0], name: row[1], content: row[2] })) : rightTemplates
-            );
-            
-            alert('✅ 已從 Google Sheets 成功匯入組套資料！');
+            alert('✅ 已成功匯入組套資料！');
             setTimeout(() => setSyncStatus('已連接'), 2000);
         } catch (error) {
             console.error('匯入失敗:', error);
             setSyncStatus('匯入失敗');
-            alert('❌ 從 Google Sheets 匯入失敗');
+            alert('❌ 匯入失敗');
         }
     };
 
-    // 匯出到 Google Sheets (需要用到 scriptUrl)
+    // 匯出功能
     const exportToGoogleSheets = async () => {
         if (!config.scriptUrl) {
-            alert('請在設定中填寫 Apps Script 網址才能匯出。');
-            return;
-        }
-
-        if (!confirm('確定要將目前的組套資料匯出到 Google Sheets 嗎？')) {
+            alert('請填寫 Apps Script 網址');
             return;
         }
 
@@ -130,17 +122,14 @@ export function App() {
             });
 
             setSyncStatus('匯出成功！');
-            alert('✅ 資料已發送！\n請至 Google 表格確認是否已更新。');
+            alert('✅ 資料已發送！請確認試算表。');
             setTimeout(() => setSyncStatus('已連接'), 2000);
-            
         } catch (error) {
-            console.error('匯出失敗:', error);
-            setSyncStatus('匯出失敗');
-            alert('❌ 匯出失敗，請檢查 Script 網址與權限。');
+            alert('❌ 匯出失敗');
         }
     };
 
-    // 複製到剪貼簿
+    // 複製功能
     const copyToClipboard = async (template) => {
         try {
             await navigator.clipboard.writeText(template.content);
@@ -158,37 +147,27 @@ export function App() {
         }
     };
 
-    // 開始編輯
     const startEdit = (template, side) => {
         setEditingTemplate({ ...template, side });
     };
 
-    // 儲存編輯
     const saveEdit = () => {
         if (!editingTemplate) return;
-        
         let newLeft = leftTemplates;
         let newRight = rightTemplates;
 
         if (editingTemplate.side === 'left') {
-            newLeft = leftTemplates.map(t => 
-                t.id === editingTemplate.id ? editingTemplate : t
-            );
+            newLeft = leftTemplates.map(t => t.id === editingTemplate.id ? editingTemplate : t);
             setLeftTemplates(newLeft);
         } else {
-            newRight = rightTemplates.map(t => 
-                t.id === editingTemplate.id ? editingTemplate : t
-            );
+            newRight = rightTemplates.map(t => t.id === editingTemplate.id ? editingTemplate : t);
             setRightTemplates(newRight);
         }
         
         saveToLocal(newLeft, newRight);
         setEditingTemplate(null);
-        setSyncStatus('已儲存');
-        setTimeout(() => setSyncStatus(config.isConnected ? '已連接' : '本地儲存'), 2000);
     };
 
-    // 新增右側組套
     const addRightTemplate = () => {
         const newId = `custom-${Date.now()}`;
         const newTemplate = { id: newId, name: '新組套', content: '' };
@@ -198,21 +177,19 @@ export function App() {
         startEdit(newTemplate, 'right');
     };
 
-    // 連接 Google Sheets
     const connectGoogleSheets = async () => {
         if (!config.spreadsheetId || !config.apiKey) {
-            alert('請輸入試算表 ID 和 API Key');
+            alert('請輸入 ID 和 Key');
             return;
         }
         const newConfig = { ...config, isConnected: true };
         setConfig(newConfig);
         saveToLocal(leftTemplates, rightTemplates, newConfig);
         await loadFromGoogleSheets();
-        alert('✅ 已成功連接 Google Sheets！');
         setShowSettings(false);
     };
 
-    // 組套按鈕元件
+    // 按鈕元件
     const TemplateButton = ({ template, side }) => (
         <div className="relative group">
             <button
@@ -221,14 +198,13 @@ export function App() {
                     copiedId === template.id 
                         ? 'bg-green-500 text-white' 
                         : 'bg-blue-600 text-white hover:bg-blue-700'
-                } w-full px-4 py-3 rounded-lg font-medium transition-all`}
+                } w-full px-4 py-3 rounded-lg font-medium transition-all shadow-sm`}
             >
                 {copiedId === template.id ? '✓ 已複製！' : template.name}
             </button>
             <button
                 onClick={() => startEdit(template, side)}
-                className="absolute top-1 right-1 p-1 bg-white rounded opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                title="編輯"
+                className="absolute top-1 right-1 p-1 bg-white rounded opacity-0 group-hover:opacity-100 transition-opacity shadow text-xs"
             >
                 ✏️
             </button>
@@ -236,153 +212,138 @@ export function App() {
     );
 
     return (
-        <div className="p-6">
+        <div className="p-6 bg-slate-50 min-h-screen">
             <div className="max-w-7xl mx-auto">
                 {/* 標題列 */}
-                <div className="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
+                <div className="bg-white rounded-xl shadow-sm p-5 mb-8 flex justify-between items-center border border-slate-200">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">放射科報告組套系統</h1>
-                        <p className="text-sm text-gray-600 mt-1">點擊按鈕一鍵複製報告內容</p>
+                        <h1 className="text-2xl font-bold text-slate-800">放射科報告組套系統</h1>
+                        <p className="text-sm text-slate-500 mt-1">點擊按鈕複製內容，✏️ 編輯組套</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-sm">
-                            <span className="text-gray-600">狀態：</span>
-                            <span className="text-gray-600 font-medium">{syncStatus}</span>
+                        <div className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full font-mono">
+                            {syncStatus}
                         </div>
-                        {config.isConnected && (
-                            <button
-                                onClick={loadFromGoogleSheets}
-                                className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm"
-                            >
-                                🔄 重新載入
-                            </button>
-                        )}
                         <button
                             onClick={() => setShowSettings(!showSettings)}
-                            className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                            className="p-2 hover:bg-slate-100 rounded-full transition text-slate-400"
                         >
                             ⚙️
                         </button>
                     </div>
                 </div>
 
-                {/* 設定面板 (已加回 Apps Script 網址) */}
+                {/* 設定面板 */}
                 {showSettings && (
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h2 className="text-xl font-bold mb-4">Google Sheets 設定</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">試算表 ID</label>
-                                <input
-                                    type="text"
-                                    value={config.spreadsheetId}
-                                    onChange={(e) => setConfig({...config, spreadsheetId: e.target.value})}
-                                    placeholder="從網址複製試算表 ID"
-                                    className="w-full px-4 py-2 border rounded-lg outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">API 金鑰</label>
-                                <input
-                                    type="text"
-                                    value={config.apiKey}
-                                    onChange={(e) => setConfig({...config, apiKey: e.target.value})}
-                                    placeholder="請輸入 Google Sheets API 金鑰"
-                                    className="w-full px-4 py-2 border rounded-lg outline-none"
-                                />
-                            </div>
-                            {/* 👇 加回來的 Apps Script 網址欄位 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Apps Script 網址 (匯出功能必填)</label>
-                                <input
-                                    type="text"
-                                    value={config.scriptUrl}
-                                    onChange={(e) => setConfig({...config, scriptUrl: e.target.value})}
-                                    placeholder="https://script.google.com/macros/s/..."
-                                    className="w-full px-4 py-2 border rounded-lg outline-none"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">需貼上 Apps Script 部署後的「網頁應用程式」網址。</p>
-                            </div>
-                            <div className="flex gap-3">
-                                <button onClick={connectGoogleSheets} className="px-4 py-2 bg-blue-600 text-white rounded-lg">連接</button>
-                                <button onClick={() => setShowSettings(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">取消</button>
-                            </div>
-                            
-                            {config.isConnected && (
-                                <div className="mt-6 pt-6 border-t flex gap-3">
-                                    <button onClick={loadFromGoogleSheets} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2">📥 匯入資料</button>
-                                    <button onClick={exportToGoogleSheets} className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center justify-center gap-2">📤 匯出資料</button>
+                    <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-blue-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <h2 className="text-lg font-bold mb-4 text-slate-800">系統設定</h2>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">試算表 ID</label>
+                                    <input
+                                        type="text"
+                                        value={config.spreadsheetId}
+                                        onChange={(e) => setConfig({...config, spreadsheetId: e.target.value})}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    />
                                 </div>
-                            )}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">API 金鑰</label>
+                                    <input
+                                        type="text"
+                                        value={config.apiKey}
+                                        onChange={(e) => setConfig({...config, apiKey: e.target.value})}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Apps Script 網址</label>
+                                    <input
+                                        type="text"
+                                        value={config.scriptUrl}
+                                        onChange={(e) => setConfig({...config, scriptUrl: e.target.value})}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={connectGoogleSheets} className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition">連接並匯入</button>
+                                    <button onClick={() => setShowSettings(false)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200">取消</button>
+                                </div>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-lg flex flex-col justify-center">
+                                <h3 className="font-bold text-sm mb-2 text-slate-700">資料管理</h3>
+                                <div className="space-y-2">
+                                    <button onClick={loadFromGoogleSheets} className="w-full bg-white border border-slate-200 text-slate-700 py-2 rounded-lg text-sm hover:border-blue-400 transition">📥 從雲端同步到本地</button>
+                                    <button onClick={exportToGoogleSheets} className="w-full bg-white border border-slate-200 text-slate-700 py-2 rounded-lg text-sm hover:border-purple-400 transition">📤 將本地上傳到雲端</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* 主要按鈕區域 */}
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">預設組套</h2>
-                        <div className="space-y-3">
+                {/* 按鈕區 */}
+                <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span> 預設組套
+                        </h2>
+                        <div className="grid grid-cols-1 gap-3">
                             {leftTemplates.map(template => (
                                 <TemplateButton key={template.id} template={template} side="left" />
                             ))}
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-800">自訂組套</h2>
-                            <button
-                                onClick={addRightTemplate}
-                                className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                ➕ 新增
-                            </button>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span> 自訂組套
+                            </h2>
+                            <button onClick={addRightTemplate} className="text-xs font-bold text-green-600 hover:bg-green-50 px-2 py-1 rounded transition">＋ 新增</button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-3">
                             {rightTemplates.length === 0 
-                                ? <p className="text-gray-400 text-center py-8">尚無自訂組套</p>
+                                ? <div className="border-2 border-dashed border-slate-200 rounded-xl py-12 text-center text-slate-400 text-sm">尚無資料</div>
                                 : rightTemplates.map(template => (
-                                    <div key={template.id}>
-                                        <TemplateButton template={template} side="right" />
-                                    </div>
+                                    <TemplateButton key={template.id} template={template} side="right" />
                                 ))
                             }
                         </div>
                     </div>
                 </div>
 
-                {/* 編輯對話框 */}
+                {/* 編輯窗 */}
                 {editingTemplate && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold">編輯組套</h3>
-                                <button onClick={() => setEditingTemplate(null)}>✕</button>
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-in zoom-in-95 duration-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-slate-800">編輯內容</h3>
+                                <button onClick={() => setEditingTemplate(null)} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">組套縮寫</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">顯示名稱</label>
                                     <input
                                         type="text"
                                         value={editingTemplate.name}
-                                        onChange={(e) => setEditingTemplate({...editingTemplate, name: e.target.value})}
-                                        className="w-full px-4 py-2 border rounded-lg outline-none"
+                                        onInput={(e) => setEditingTemplate({...editingTemplate, name: e.target.value})}
+                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">組套內容</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">報告內容</label>
                                     <textarea
                                         value={editingTemplate.content}
-                                        onChange={(e) => setEditingTemplate({...editingTemplate, content: e.target.value})}
-                                        rows="12"
-                                        className="w-full px-4 py-2 border rounded-lg outline-none font-mono text-sm"
+                                        onInput={(e) => setEditingTemplate({...editingTemplate, content: e.target.value})}
+                                        rows="10"
+                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm leading-relaxed"
                                     />
                                 </div>
-                            </div>
-                            <div className="flex gap-3 mt-6">
-                                <button onClick={saveEdit} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg">💾 儲存</button>
-                                <button onClick={() => setEditingTemplate(null)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">取消</button>
+                                <div className="flex gap-3">
+                                    <button onClick={saveEdit} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">💾 儲存變更</button>
+                                    <button onClick={() => setEditingTemplate(null)} className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">取消</button>
+                                </div>
                             </div>
                         </div>
                     </div>
