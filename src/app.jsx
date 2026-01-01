@@ -104,30 +104,27 @@ export function App() {
         } catch (error) {
             console.error('匯入失敗:', error);
             setSyncStatus('匯入失敗');
-            alert('❌ 從 Google Sheets 匯入失敗\n\n請檢查：\n1. 試算表 ID 是否正確\n2. API Key 是否正確\n3. 試算表權限是否設為「知道連結的使用者」\n4. 工作表名稱是否為「左側組套」和「右側組套」');
+            alert('❌ 從 Google Sheets 匯入失敗');
         }
     };
 
     // 匯出到 Google Sheets（使用 Apps Script）
     const exportToGoogleSheets = async () => {
         if (!config.spreadsheetId || !config.scriptUrl) {
-            alert('需要設定 Apps Script 網址才能匯出。\n\n請參考說明文件設定 Google Apps Script。');
+            alert('需要設定 Apps Script 網址才能匯出。');
             return;
         }
 
-        if (!confirm('確定要將目前的組套資料匯出到 Google Sheets 嗎？\n\n這會覆蓋試算表中的現有資料。')) {
+        if (!confirm('確定要將目前的組套資料匯出到 Google Sheets 嗎？')) {
             return;
         }
 
         try {
             setSyncStatus('匯出中...');
-            
-            const response = await fetch(config.scriptUrl, {
+            await fetch(config.scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     leftTemplates: leftTemplates,
                     rightTemplates: rightTemplates
@@ -141,7 +138,7 @@ export function App() {
         } catch (error) {
             console.error('匯出失敗:', error);
             setSyncStatus('匯出失敗');
-            alert('❌ 匯出失敗，請檢查 Apps Script 設定');
+            alert('❌ 匯出失敗');
         }
     };
 
@@ -152,7 +149,6 @@ export function App() {
             setCopiedId(template.id);
             setTimeout(() => setCopiedId(null), 2000);
         } catch (err) {
-            // 備用方案
             const textarea = document.createElement('textarea');
             textarea.value = template.content;
             document.body.appendChild(textarea);
@@ -197,24 +193,11 @@ export function App() {
     // 新增右側組套
     const addRightTemplate = () => {
         const newId = `custom-${Date.now()}`;
-        const newTemplate = {
-            id: newId,
-            name: '新組套',
-            content: ''
-        };
+        const newTemplate = { id: newId, name: '新組套', content: '' };
         const newRight = [...rightTemplates, newTemplate];
         setRightTemplates(newRight);
         saveToLocal(leftTemplates, newRight);
         startEdit(newTemplate, 'right');
-    };
-
-    // 刪除右側組套
-    const deleteTemplate = (id) => {
-        if (confirm('確定要刪除這個組套嗎？')) {
-            const newRight = rightTemplates.filter(t => t.id !== id);
-            setRightTemplates(newRight);
-            saveToLocal(leftTemplates, newRight);
-        }
     };
 
     // 連接 Google Sheets
@@ -223,20 +206,11 @@ export function App() {
             alert('請輸入試算表 ID 和 API Key');
             return;
         }
-
         const newConfig = { ...config, isConnected: true };
         setConfig(newConfig);
-        
-        const data = {
-            leftTemplates,
-            rightTemplates,
-            config: newConfig,
-            lastUpdated: new Date().toISOString()
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        
+        saveToLocal(leftTemplates, rightTemplates);
         await loadFromGoogleSheets();
-        alert('✅ 已成功連接 Google Sheets！\n\n您現在可以使用匯入/匯出功能。');
+        alert('✅ 已成功連接 Google Sheets！');
         setShowSettings(false);
     };
 
@@ -247,7 +221,7 @@ export function App() {
                 onClick={() => copyToClipboard(template)}
                 className={`${
                     copiedId === template.id 
-                        ? 'bg-green-500 text-white copied-animation' 
+                        ? 'bg-green-500 text-white' 
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                 } w-full px-4 py-3 rounded-lg font-medium transition-all`}
             >
@@ -275,15 +249,7 @@ export function App() {
                     <div className="flex items-center gap-4">
                         <div className="text-sm">
                             <span className="text-gray-600">狀態：</span>
-                            <span className={`${
-                                syncStatus.includes('已同步') || syncStatus.includes('已連接') 
-                                    ? 'text-green-600' 
-                                    : syncStatus.includes('失敗') 
-                                    ? 'text-red-600'
-                                    : 'text-gray-600'
-                            } font-medium`}>
-                                {syncStatus}
-                            </span>
+                            <span className="text-gray-600 font-medium">{syncStatus}</span>
                         </div>
                         {config.isConnected && (
                             <button
@@ -308,85 +274,29 @@ export function App() {
                         <h2 className="text-xl font-bold mb-4">Google Sheets 設定</h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    試算表 ID
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">試算表 ID</label>
                                 <input
                                     type="text"
                                     value={config.spreadsheetId}
                                     onChange={(e) => setConfig({...config, spreadsheetId: e.target.value})}
                                     placeholder="從網址複製試算表 ID"
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 border rounded-lg outline-none"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    範例: https://docs.google.com/spreadsheets/d/<strong>YOUR_SPREADSHEET_ID</strong>/edit
-                                </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    API 金鑰
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">API 金鑰</label>
                                 <input
                                     type="text"
                                     value={config.apiKey}
                                     onChange={(e) => setConfig({...config, apiKey: e.target.value})}
                                     placeholder="請輸入 Google Sheets API 金鑰"
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 border rounded-lg outline-none"
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Apps Script 網址（選填，用於匯出功能）
-                                </label>
-                                <input
-                                    type="text"
-                                    value={config.scriptUrl}
-                                    onChange={(e) => setConfig({...config, scriptUrl: e.target.value})}
-                                    placeholder="https://script.google.com/macros/s/..."
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    若要使用匯出功能，需設定 Apps Script 網址（參考說明文件）
-                                </p>
                             </div>
                             <div className="flex gap-3">
-                                <button 
-                                    onClick={connectGoogleSheets}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    連接 Google Sheets
-                                </button>
-                                <button 
-                                    onClick={() => setShowSettings(false)}
-                                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                                >
-                                    取消
-                                </button>
+                                <button onClick={connectGoogleSheets} className="px-4 py-2 bg-blue-600 text-white rounded-lg">連接</button>
+                                <button onClick={() => setShowSettings(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">取消</button>
                             </div>
-                            
-                            {config.isConnected && (
-                                <div className="mt-6 pt-6 border-t">
-                                    <h3 className="text-lg font-bold mb-3">資料管理</h3>
-                                    <div className="flex gap-3">
-                                        <button 
-                                            onClick={loadFromGoogleSheets}
-                                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-                                        >
-                                            📥 從 Google Sheets 匯入
-                                        </button>
-                                        <button 
-                                            onClick={exportToGoogleSheets}
-                                            className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
-                                        >
-                                            📤 匯出到 Google Sheets
-                                        </button>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        💡 匯入：從 Google Sheets 載入最新組套資料<br/>
-                                        💡 匯出：將目前的組套資料儲存到 Google Sheets
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}
@@ -403,7 +313,7 @@ export function App() {
                         </div>
                     </div>
 
-                    {/* 右側組套 */}
+                    {/* 右側組套 - 已移除所有刪除按鈕 */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-gray-800">自訂組套</h2>
@@ -416,17 +326,10 @@ export function App() {
                         </div>
                         <div className="space-y-3">
                             {rightTemplates.length === 0 
-                                ? <p className="text-gray-400 text-center py-8">尚無自訂組套，請點擊上方「新增」按鈕</p>
+                                ? <p className="text-gray-400 text-center py-8">尚無自訂組套</p>
                                 : rightTemplates.map(template => (
-                                    <div key={template.id} className="relative">
+                                    <div key={template.id}>
                                         <TemplateButton template={template} side="right" />
-                                        <button
-                                            onClick={() => deleteTemplate(template.id)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full hover:bg-red-600 flex items-center justify-center text-sm"
-                                            title="刪除"
-                                        >
-                                            ✕
-                                        </button>
                                     </div>
                                 ))
                             }
@@ -434,60 +337,37 @@ export function App() {
                     </div>
                 </div>
 
-                {/* 編輯對話框 */}
+                {/* 編輯對話框 - 僅保留儲存與取消 */}
                 {editingTemplate && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-bold">編輯組套</h3>
-                                <button
-                                    onClick={() => setEditingTemplate(null)}
-                                    className="p-1 hover:bg-gray-100 rounded"
-                                >
-                                    ✕
-                                </button>
+                                <button onClick={() => setEditingTemplate(null)}>✕</button>
                             </div>
-                            
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        組套縮寫
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">組套縮寫</label>
                                     <input
                                         type="text"
                                         value={editingTemplate.name}
                                         onChange={(e) => setEditingTemplate({...editingTemplate, name: e.target.value})}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full px-4 py-2 border rounded-lg outline-none"
                                     />
                                 </div>
-                                
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        組套內容
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">組套內容</label>
                                     <textarea
                                         value={editingTemplate.content}
                                         onChange={(e) => setEditingTemplate({...editingTemplate, content: e.target.value})}
                                         rows="12"
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
-                                        placeholder="請輸入報告組套內容..."
+                                        className="w-full px-4 py-2 border rounded-lg outline-none font-mono text-sm"
                                     />
                                 </div>
                             </div>
-
                             <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={saveEdit}
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    💾 儲存
-                                </button>
-                                <button
-                                    onClick={() => setEditingTemplate(null)}
-                                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                                >
-                                    取消
-                                </button>
+                                <button onClick={saveEdit} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg">💾 儲存</button>
+                                <button onClick={() => setEditingTemplate(null)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">取消</button>
                             </div>
                         </div>
                     </div>
