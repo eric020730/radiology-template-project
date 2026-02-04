@@ -1348,6 +1348,23 @@ export function App() {
                                 if (s && i != null) setDropGroupTarget({ side: s, index: parseInt(i, 10) });
                             }
                         }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (dragGroupState && dropGroupTarget) {
+                                if (dragGroupState.side === 'left' && dropGroupTarget.side === 'left') {
+                                    reorderGroups('left', dragGroupState.index, dropGroupTarget.index);
+                                } else if (dragGroupState.side === 'right' && dropGroupTarget.side === 'left') {
+                                    moveGroupBetweenSides('right', dragGroupState.index, 'left', dropGroupTarget.index);
+                                } else if (dragGroupState.side === 'right' && dropGroupTarget.side === 'right') {
+                                    reorderGroups('right', dragGroupState.index, dropGroupTarget.index);
+                                } else if (dragGroupState.side === 'left' && dropGroupTarget.side === 'right') {
+                                    moveGroupBetweenSides('left', dragGroupState.index, 'right', dropGroupTarget.index);
+                                }
+                            }
+                            setDragGroupState(null);
+                            setDropGroupTarget(null);
+                        }}
                         aria-hidden
                     />
                 )}
