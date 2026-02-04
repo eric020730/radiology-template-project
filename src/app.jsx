@@ -812,7 +812,7 @@ export function App() {
         }
     };
 
-    // 分組拖曳排序：將 side 側的 fromIndex 分組移到 toIndex
+    // 分組拖曳排序：將 side 側的 fromIndex 分組移到 toIndex（同側）
     const reorderGroups = (side, fromIndex, toIndex) => {
         if (fromIndex === toIndex) return;
         const updatedTabs = tabs.map((tab, ti) => {
@@ -821,6 +821,24 @@ export function App() {
             const [removed] = groups.splice(fromIndex, 1);
             groups.splice(toIndex, 0, removed);
             return side === 'left' ? { ...tab, left: groups } : { ...tab, right: groups };
+        });
+        setTabs(updatedTabs);
+        saveToLocal(updatedTabs);
+    };
+
+    // 分組跨側拖曳：將 fromSide 的 fromIndex 分組移到 toSide 的 toIndex
+    const moveGroupBetweenSides = (fromSide, fromIndex, toSide, toIndex) => {
+        const updatedTabs = tabs.map((tab, ti) => {
+            if (ti !== activeTabIdx) return tab;
+            const leftGroups = [...(tab.left || [])];
+            const rightGroups = [...(tab.right || [])];
+            const [movedGroup] = fromSide === 'left' ? leftGroups.splice(fromIndex, 1) : rightGroups.splice(fromIndex, 1);
+            if (toSide === 'left') {
+                leftGroups.splice(toIndex, 0, movedGroup);
+            } else {
+                rightGroups.splice(toIndex, 0, movedGroup);
+            }
+            return { ...tab, left: leftGroups, right: rightGroups };
         });
         setTabs(updatedTabs);
         saveToLocal(updatedTabs);
@@ -1284,7 +1302,7 @@ export function App() {
                     </button>
                 </div>
                 {showEditButtons && (
-                    <div className="absolute top-1/2 -translate-y-1/2 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-1/2 -translate-y-1/2 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
@@ -1302,6 +1320,36 @@ export function App() {
                             ✏️
                         </button>
                     </div>
+                )}
+                {/* 拖曳分組時：透明遮罩置於最上層，統一接收 drag 事件，避免游標在組套按鈕上出現紅色禁止 */}
+                {dragGroupState && (
+                    <div
+                        className="absolute inset-0 min-w-full min-h-full z-[9999] rounded-lg cursor-grabbing pointer-events-auto"
+                        style={{ background: 'rgba(0,0,0,0.001)' }}
+                        onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = 'move';
+                            const container = e.currentTarget.closest('[data-group-container]');
+                            if (container) {
+                                const s = container.getAttribute('data-side');
+                                const i = container.getAttribute('data-index');
+                                if (s && i != null) setDropGroupTarget({ side: s, index: parseInt(i, 10) });
+                            }
+                        }}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = 'move';
+                            const container = e.currentTarget.closest('[data-group-container]');
+                            if (container) {
+                                const s = container.getAttribute('data-side');
+                                const i = container.getAttribute('data-index');
+                                if (s && i != null) setDropGroupTarget({ side: s, index: parseInt(i, 10) });
+                            }
+                        }}
+                        aria-hidden
+                    />
                 )}
             </div>
         );
@@ -1521,8 +1569,25 @@ export function App() {
                             )}
                         </div>
                         {(!activeTab.left || activeTab.left.length === 0) ? (
-                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-400 text-sm">
-                                {editingGroupsLeft ? '尚無分組，請點「新增分組」' : '尚無分組，請點「編輯分組」後可新增與刪除分組'}
+                            <div
+                                className={`border-2 border-dashed rounded-xl p-6 text-center text-sm transition-colors ${dragGroupState && dropGroupTarget?.side === 'left' ? 'border-blue-400 bg-blue-50/80 text-blue-600' : 'border-slate-200 text-slate-400'}`}
+                                onDragOver={(e) => {
+                                    if (!dragGroupState) return;
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                    setDropGroupTarget({ side: 'left', index: 0 });
+                                }}
+                                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropGroupTarget(null); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    if (dragGroupState && dropGroupTarget?.side === 'left') {
+                                        if (dragGroupState.side === 'right') moveGroupBetweenSides('right', dragGroupState.index, 'left', 0);
+                                    }
+                                    setDragGroupState(null);
+                                    setDropGroupTarget(null);
+                                }}
+                            >
+                                {editingGroupsLeft ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「編輯分組」後可新增與刪除分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -1540,7 +1605,7 @@ export function App() {
                                         data-side="left"
                                         data-index={groupIndex}
                                         onDragOver={(e) => {
-                                            if (!editingGroupsLeft || !dragGroupState || dragGroupState.side !== 'left') return;
+                                            if (!dragGroupState) return;
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
                                             setDropGroupTarget({ side: 'left', index: groupIndex });
@@ -1550,8 +1615,12 @@ export function App() {
                                         }}
                                         onDrop={(e) => {
                                             e.preventDefault();
-                                            if (dragGroupState?.side === 'left' && dropGroupTarget?.side === 'left') {
-                                                reorderGroups('left', dragGroupState.index, dropGroupTarget.index);
+                                            if (dragGroupState && dropGroupTarget) {
+                                                if (dragGroupState.side === 'left' && dropGroupTarget.side === 'left') {
+                                                    reorderGroups('left', dragGroupState.index, dropGroupTarget.index);
+                                                } else if (dragGroupState.side === 'right' && dropGroupTarget.side === 'left') {
+                                                    moveGroupBetweenSides('right', dragGroupState.index, 'left', dropGroupTarget.index);
+                                                }
                                             }
                                             setDragGroupState(null);
                                             setDropGroupTarget(null);
@@ -1656,8 +1725,25 @@ export function App() {
                             )}
                         </div>
                         {(!activeTab.right || activeTab.right.length === 0) ? (
-                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-400 text-sm">
-                                {editingGroupsRight ? '尚無分組，請點「新增分組」' : '尚無分組，請點「編輯分組」後可新增與刪除分組'}
+                            <div
+                                className={`border-2 border-dashed rounded-xl p-6 text-center text-sm transition-colors ${dragGroupState && dropGroupTarget?.side === 'right' ? 'border-blue-400 bg-blue-50/80 text-blue-600' : 'border-slate-200 text-slate-400'}`}
+                                onDragOver={(e) => {
+                                    if (!dragGroupState) return;
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                    setDropGroupTarget({ side: 'right', index: 0 });
+                                }}
+                                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropGroupTarget(null); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    if (dragGroupState && dropGroupTarget?.side === 'right') {
+                                        if (dragGroupState.side === 'left') moveGroupBetweenSides('left', dragGroupState.index, 'right', 0);
+                                    }
+                                    setDragGroupState(null);
+                                    setDropGroupTarget(null);
+                                }}
+                            >
+                                {editingGroupsRight ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「編輯分組」後可新增與刪除分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -1675,7 +1761,7 @@ export function App() {
                                         data-side="right"
                                         data-index={groupIndex}
                                         onDragOver={(e) => {
-                                            if (!editingGroupsRight || !dragGroupState || dragGroupState.side !== 'right') return;
+                                            if (!dragGroupState) return;
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
                                             setDropGroupTarget({ side: 'right', index: groupIndex });
@@ -1685,8 +1771,12 @@ export function App() {
                                         }}
                                         onDrop={(e) => {
                                             e.preventDefault();
-                                            if (dragGroupState?.side === 'right' && dropGroupTarget?.side === 'right') {
-                                                reorderGroups('right', dragGroupState.index, dropGroupTarget.index);
+                                            if (dragGroupState && dropGroupTarget) {
+                                                if (dragGroupState.side === 'right' && dropGroupTarget.side === 'right') {
+                                                    reorderGroups('right', dragGroupState.index, dropGroupTarget.index);
+                                                } else if (dragGroupState.side === 'left' && dropGroupTarget.side === 'right') {
+                                                    moveGroupBetweenSides('left', dragGroupState.index, 'right', dropGroupTarget.index);
+                                                }
                                             }
                                             setDragGroupState(null);
                                             setDropGroupTarget(null);
