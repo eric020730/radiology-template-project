@@ -1306,16 +1306,18 @@ export function App() {
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
-                            className="p-0.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition text-xs leading-none"
+                            className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all flex items-center justify-center shrink-0"
                             title="刪除"
+                            style={{ width: '20px', height: '20px' }}
                         >
                             🗑️
                         </button>
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
-                            className="p-0.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition text-xs leading-none"
+                            className="text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex items-center justify-center shrink-0"
                             title="編輯"
+                            style={{ width: '20px', height: '20px' }}
                         >
                             ✏️
                         </button>
