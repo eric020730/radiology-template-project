@@ -1002,7 +1002,7 @@ export function App() {
                             {/* 只要內容包含 left 或 right，就顯示 R 和 L 按鈕 */}
                             {/* 當內容包含 right/bilateral 時，顯示 B 按鈕，並將 L / B / R 的視覺位置調整為 R 在左、L 在右 */}
                             {(hasLeft || hasRight) && !showEditButtons && (
-                                <div className="flex items-center gap-0.5 ml-1">
+                                <div className="flex items-center gap-[4px] ml-1">
                                     {/* R 按鈕：改到左邊 - 正方形、字體 10px、置中 */}
                                     <button
                                         type="button"
@@ -1063,7 +1063,7 @@ export function App() {
                             )}
                             {/* Enlarged 快速複製按鈕 - 當內容包含 No enlarged/Boarderline enlarged/Enlarged 時顯示 */}
                             {hasEnlarged && !showEditButtons && (
-                                <div className="flex items-center gap-0.5 ml-1">
+                                <div className="flex items-center gap-[4px] ml-1">
                                     {/* 小按鈕：顯示 No enlarged - 正方形、字體 10px、置中 */}
                                     <button
                                         type="button"
@@ -1122,7 +1122,7 @@ export function App() {
                             )}
                             {/* Severity 快速複製按鈕 - 當內容包含 Mild/Moderate/Severe 時顯示 */}
                             {hasSeverity && !showEditButtons && (
-                                <div className="flex items-center gap-0.5 ml-1">
+                                <div className="flex items-center gap-[4px] ml-1">
                                     {/* 輕按鈕：顯示 Mild - 正方形、字體 10px、置中 */}
                                     <button
                                         type="button"
