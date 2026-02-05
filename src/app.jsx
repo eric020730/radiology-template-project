@@ -1564,12 +1564,16 @@ export function App() {
                                 onKeyDown={(e) => e.key === 'Enter' && setEditingTabName(false)}
                             />
                         ) : (
-                            <h2 className="text-2xl font-bold text-slate-800">
+                            <h2
+                                onClick={() => setEditingTabName(true)}
+                                className="text-2xl font-bold text-slate-800 cursor-pointer hover:text-blue-600"
+                                title="點擊編輯頁籤"
+                            >
                                 {activeTab.name}
                             </h2>
                         )}
                     </div>
-                    {editingTabName ? (
+                    {editingTabName && (
                         <div className="flex items-center gap-2">
                             <button onClick={() => { deleteCurrentTab(); setEditingTabName(false); }} className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-3 py-1 rounded transition">
                                 刪除此頁籤
@@ -1578,10 +1582,6 @@ export function App() {
                                 完成
                             </button>
                         </div>
-                    ) : (
-                        <button onClick={() => setEditingTabName(true)} className="text-sm hover:opacity-70 transition-opacity" title="編輯頁籤">
-                            📝
-                        </button>
                     )}
                 </div>
 
@@ -1590,14 +1590,18 @@ export function App() {
                     {/* 左側：標準組套 */}
                     <div ref={leftGroupsContainerRef} className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">大組套</h3>
-                            {editingGroupsLeft ? (
+                            <h3
+                                onClick={() => { if (!editingGroupsLeft) setEditingGroupsLeft(true); }}
+                                className="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 select-none"
+                                title="點擊編輯分組"
+                            >
+                                大組套
+                            </h3>
+                            {editingGroupsLeft && (
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => addGroup('left')} className="text-xs bg-green-50 text-green-600 font-bold px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增分組</button>
                                     <button onClick={() => setEditingGroupsLeft(false)} className="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
                                 </div>
-                            ) : (
-                                <button onClick={() => setEditingGroupsLeft(true)} className="text-sm hover:opacity-70 transition-opacity" title="編輯分組">📋</button>
                             )}
                         </div>
                         {(!activeTab.left || activeTab.left.length === 0) ? (
@@ -1619,7 +1623,7 @@ export function App() {
                                     setDropGroupTarget(null);
                                 }}
                             >
-                                {editingGroupsLeft ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「編輯分組」後可新增與刪除分組'}
+                                {editingGroupsLeft ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「大組套」後可新增與刪除分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -1703,7 +1707,7 @@ export function App() {
                                                 ) : (
                                                     <span
                                                         onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
-                                                        className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600 hover:underline"
+                                                        className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
                                                         {group.name}
@@ -1748,14 +1752,18 @@ export function App() {
                     {/* 右側：自訂組套 */}
                     <div ref={rightGroupsContainerRef} className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">小組套</h3>
-                            {editingGroupsRight ? (
+                            <h3
+                                onClick={() => { if (!editingGroupsRight) setEditingGroupsRight(true); }}
+                                className="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 select-none"
+                                title="點擊編輯分組"
+                            >
+                                小組套
+                            </h3>
+                            {editingGroupsRight && (
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => addGroup('right')} className="text-xs bg-green-50 text-green-600 font-bold px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增分組</button>
                                     <button onClick={() => setEditingGroupsRight(false)} className="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
                                 </div>
-                            ) : (
-                                <button onClick={() => setEditingGroupsRight(true)} className="text-sm hover:opacity-70 transition-opacity" title="編輯分組">📋</button>
                             )}
                         </div>
                         {(!activeTab.right || activeTab.right.length === 0) ? (
@@ -1777,7 +1785,7 @@ export function App() {
                                     setDropGroupTarget(null);
                                 }}
                             >
-                                {editingGroupsRight ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「編輯分組」後可新增與刪除分組'}
+                                {editingGroupsRight ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「小組套」後可新增與刪除分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -1861,7 +1869,7 @@ export function App() {
                                                 ) : (
                                                     <span
                                                         onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
-                                                        className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600 hover:underline"
+                                                        className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
                                                         {group.name}
