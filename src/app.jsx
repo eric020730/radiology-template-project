@@ -1669,9 +1669,9 @@ export function App() {
                                             setDropGroupTarget(null);
                                         }}
                                     >
-                                        <div className="flex justify-between items-baseline mb-3">
+                                            <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {editingGroupsLeft && (
+                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -1723,10 +1723,12 @@ export function App() {
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
-                                                    <>
-                                                        <button onClick={() => addTemplateToGroup('left', group.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增組套</button>
-                                                        <button onClick={() => setEditingTemplatesGroup(null)} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
-                                                    </>
+                                                    <button
+                                                        onClick={() => setEditingTemplatesGroup(null)}
+                                                        className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200"
+                                                    >
+                                                        完成
+                                                    </button>
                                                 ) : (
                                                     <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
                                                 )}
@@ -1754,6 +1756,18 @@ export function App() {
                                     </div>
                                     );
                                 })}
+                            </div>
+                        )}
+                        {editingTabName && (
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => addGroup('left')}
+                                    className="text-lg font-semibold text-slate-400 hover:text-green-600"
+                                    title="新增分組"
+                                >
+                                    ＋
+                                </button>
                             </div>
                         )}
                     </div>
@@ -1833,9 +1847,9 @@ export function App() {
                                             setDropGroupTarget(null);
                                         }}
                                     >
-                                        <div className="flex justify-between items-baseline mb-3">
+                                            <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {editingGroupsRight && (
+                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -1887,10 +1901,12 @@ export function App() {
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
-                                                    <>
-                                                        <button onClick={() => addTemplateToGroup('right', group.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增組套</button>
-                                                        <button onClick={() => setEditingTemplatesGroup(null)} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
-                                                    </>
+                                                    <button
+                                                        onClick={() => setEditingTemplatesGroup(null)}
+                                                        className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200"
+                                                    >
+                                                        完成
+                                                    </button>
                                                 ) : (
                                                     <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
                                                 )}
@@ -1918,6 +1934,18 @@ export function App() {
                                     </div>
                                     );
                                 })}
+                            </div>
+                        )}
+                        {editingTabName && (
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => addGroup('right')}
+                                    className="text-lg font-semibold text-slate-400 hover:text-green-600"
+                                    title="新增分組"
+                                >
+                                    ＋
+                                </button>
                             </div>
                         )}
                     </div>
