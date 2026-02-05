@@ -1305,9 +1305,9 @@ export function App() {
                                         type="button"
                                         onMouseDown={(e) => e.stopPropagation()}
                                         onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
-                                        className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all flex items-center justify-center shrink-0"
+                                        className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-all flex items-center justify-center shrink-0"
                                         title="刪除"
-                                        style={{ width: '16px', height: '16px' }}
+                                        style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, fontSize: 12, lineHeight: 1 }}
                                     >
                                         🗑️
                                     </button>
@@ -1315,9 +1315,9 @@ export function App() {
                                         type="button"
                                         onMouseDown={(e) => e.stopPropagation()}
                                         onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
-                                        className="text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex items-center justify-center shrink-0"
+                                        className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-all flex items-center justify-center shrink-0"
                                         title="編輯"
-                                        style={{ width: '16px', height: '16px' }}
+                                        style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, fontSize: 12, lineHeight: 1 }}
                                     >
                                         ✏️
                                     </button>
