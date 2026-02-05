@@ -1298,31 +1298,32 @@ export function App() {
                                     </div>
                                 </div>
                             )}
+                            {/* 編輯組套時：編輯／刪除按鈕，與小／中／大同一區塊位置 */}
+                            {showEditButtons && (
+                                <div className="flex items-center gap-[4px] ml-1">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
+                                        className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all flex items-center justify-center shrink-0"
+                                        title="刪除"
+                                        style={{ width: '20px', height: '20px' }}
+                                    >
+                                        🗑️
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
+                                        className="text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex items-center justify-center shrink-0"
+                                        title="編輯"
+                                        style={{ width: '20px', height: '20px' }}
+                                    >
+                                        ✏️
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </button>
                 </div>
-                {showEditButtons && (
-                    <div className="absolute top-1/2 -translate-y-1/2 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                        <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
-                            className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all flex items-center justify-center shrink-0"
-                            title="刪除"
-                            style={{ width: '20px', height: '20px' }}
-                        >
-                            🗑️
-                        </button>
-                        <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
-                            className="text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex items-center justify-center shrink-0"
-                            title="編輯"
-                            style={{ width: '20px', height: '20px' }}
-                        >
-                            ✏️
-                        </button>
-                    </div>
-                )}
                 {/* 拖曳分組時：透明遮罩置於最上層，統一接收 drag 事件，避免游標在組套按鈕上出現紅色禁止 */}
                 {dragGroupState && (
                     <div
