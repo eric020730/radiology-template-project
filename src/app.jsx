@@ -64,6 +64,7 @@ export function App() {
     const swapTemplatesRef = useRef(null);
     const leftGroupsContainerRef = useRef(null);  // 左側分組容器 ref
     const rightGroupsContainerRef = useRef(null); // 右側分組容器 ref
+    const tabEditAreaRef = useRef(null);          // 當前頁籤標題與操作區域 ref
     
     const [config, setConfig] = useState({
         spreadsheetId: '',
@@ -147,6 +148,23 @@ export function App() {
             };
         }
     }, [editingTemplatesGroup, dragState, editingTemplate]);
+
+    // 點擊頁籤欄以外區域時，離開「編輯頁籤名稱」模式（視同點擊完成）
+    useEffect(() => {
+        if (!editingTabName) return;
+
+        const handleClickOutsideTabEdit = (event) => {
+            if (!tabEditAreaRef.current) return;
+            if (!tabEditAreaRef.current.contains(event.target)) {
+                setEditingTabName(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutsideTabEdit);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutsideTabEdit);
+        };
+    }, [editingTabName]);
 
     // 離開編輯組套模式時清除懸停狀態
     useEffect(() => {
@@ -1559,7 +1577,10 @@ export function App() {
                 )}
 
                 {/* 當前頁籤標題與操作 */}
-                <div className="flex justify-between items-end mb-6 pb-2 border-b border-slate-200">
+                <div
+                    ref={tabEditAreaRef}
+                    className="flex justify-between items-end mb-6 pb-2 border-b border-slate-200"
+                >
                     <div className="flex items-center gap-3">
                         {editingTabName ? (
                             <input 
@@ -1596,21 +1617,6 @@ export function App() {
                 <div className="grid md:grid-cols-2 gap-8">
                     {/* 左側：標準組套 */}
                     <div ref={leftGroupsContainerRef} className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3
-                                onClick={() => { if (!editingGroupsLeft) setEditingGroupsLeft(true); }}
-                                className="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 select-none"
-                                title="點擊編輯分組"
-                            >
-                                大組套
-                            </h3>
-                            {editingGroupsLeft && (
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => addGroup('left')} className="text-xs bg-green-50 text-green-600 font-bold px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增分組</button>
-                                    <button onClick={() => setEditingGroupsLeft(false)} className="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
-                                </div>
-                            )}
-                        </div>
                         {(!activeTab.left || activeTab.left.length === 0) ? (
                             <div
                                 className={`border-2 border-dashed rounded-xl p-6 text-center text-sm transition-colors ${dragGroupState && dropGroupTarget?.side === 'left' ? 'border-blue-400 bg-blue-50/80 text-blue-600' : 'border-slate-200 text-slate-400'}`}
@@ -1723,17 +1729,41 @@ export function App() {
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
-                                                    <button
-                                                        onClick={() => setEditingTemplatesGroup(null)}
-                                                        className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200"
-                                                    >
-                                                        完成
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => showDeleteGroupConfirm(group.id, 'left')}
+                                                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                                            title="刪除分組"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                        <button
+                                                            onClick={() => addTemplateToGroup('left', group.id)}
+                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
+                                                            title="新增組套"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </>
                                                 ) : (
-                                                    <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
-                                                )}
-                                                {editingGroupsLeft && (
-                                                    <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }}
+                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
+                                                            title="新增組套"
+                                                        >
+                                                            +
+                                                        </button>
+                                                        {editingGroupsLeft && (
+                                                            <button
+                                                                onClick={() => showDeleteGroupConfirm(group.id, 'left')}
+                                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                                                title="刪除分組"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -1774,21 +1804,6 @@ export function App() {
 
                     {/* 右側：自訂組套 */}
                     <div ref={rightGroupsContainerRef} className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3
-                                onClick={() => { if (!editingGroupsRight) setEditingGroupsRight(true); }}
-                                className="text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 select-none"
-                                title="點擊編輯分組"
-                            >
-                                小組套
-                            </h3>
-                            {editingGroupsRight && (
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => addGroup('right')} className="text-xs bg-green-50 text-green-600 font-bold px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增分組</button>
-                                    <button onClick={() => setEditingGroupsRight(false)} className="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
-                                </div>
-                            )}
-                        </div>
                         {(!activeTab.right || activeTab.right.length === 0) ? (
                             <div
                                 className={`border-2 border-dashed rounded-xl p-6 text-center text-sm transition-colors ${dragGroupState && dropGroupTarget?.side === 'right' ? 'border-blue-400 bg-blue-50/80 text-blue-600' : 'border-slate-200 text-slate-400'}`}
@@ -1901,17 +1916,41 @@ export function App() {
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
-                                                    <button
-                                                        onClick={() => setEditingTemplatesGroup(null)}
-                                                        className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200"
-                                                    >
-                                                        完成
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => showDeleteGroupConfirm(group.id, 'right')}
+                                                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                                            title="刪除分組"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                        <button
+                                                            onClick={() => addTemplateToGroup('right', group.id)}
+                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
+                                                            title="新增組套"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </>
                                                 ) : (
-                                                    <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
-                                                )}
-                                                {editingGroupsRight && (
-                                                    <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }}
+                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
+                                                            title="新增組套"
+                                                        >
+                                                            +
+                                                        </button>
+                                                        {editingGroupsRight && (
+                                                            <button
+                                                                onClick={() => showDeleteGroupConfirm(group.id, 'right')}
+                                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                                                title="刪除分組"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
