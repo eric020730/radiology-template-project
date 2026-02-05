@@ -1300,9 +1300,10 @@ export function App() {
                             )}
                             {/* 編輯組套時：編輯／刪除按鈕，與小／中／大同一區塊位置 */}
                             {showEditButtons && (
-                                <div className="flex items-center gap-[4px] ml-1">
+                                <div className="flex items-center gap-[4px] ml-1" onMouseDown={(e) => e.stopPropagation()}>
                                     <button
                                         type="button"
+                                        onMouseDown={(e) => e.stopPropagation()}
                                         onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
                                         className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all flex items-center justify-center shrink-0"
                                         title="刪除"
@@ -1312,6 +1313,7 @@ export function App() {
                                     </button>
                                     <button
                                         type="button"
+                                        onMouseDown={(e) => e.stopPropagation()}
                                         onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
                                         className="text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex items-center justify-center shrink-0"
                                         title="編輯"
