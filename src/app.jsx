@@ -1950,7 +1950,7 @@ export function App() {
                     <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800">編輯內容</h3>
-                            <button onClick={() => setEditingTemplate(null)} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
+                            <button onClick={() => { if (editingTemplate?._isNew) setEditingTemplatesGroup(null); setEditingTemplate(null); }} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
                         </div>
                         <div className="space-y-4">
                             <div>
@@ -1973,7 +1973,7 @@ export function App() {
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button onClick={saveTemplateEdit} className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md shadow-blue-100">儲存</button>
-                                <button onClick={() => setEditingTemplate(null)} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200">取消</button>
+                                <button onClick={() => { if (editingTemplate?._isNew) setEditingTemplatesGroup(null); setEditingTemplate(null); }} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200">取消</button>
                             </div>
                         </div>
                     </div>
