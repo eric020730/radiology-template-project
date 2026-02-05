@@ -1701,7 +1701,11 @@ export function App() {
                                                         }}
                                                     />
                                                 ) : (
-                                                    <span className="text-sm font-bold text-slate-700 truncate">
+                                                    <span
+                                                        onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
+                                                        className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600 hover:underline"
+                                                        title="點擊編輯組套"
+                                                    >
                                                         {group.name}
                                                     </span>
                                                 )}
@@ -1712,9 +1716,7 @@ export function App() {
                                                         <button onClick={() => addTemplateToGroup('left', group.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增組套</button>
                                                         <button onClick={() => setEditingTemplatesGroup(null)} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
                                                     </>
-                                                ) : (
-                                                    <button onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'left' })} className="text-sm hover:opacity-70 transition-opacity" title="編輯組套">✏️</button>
-                                                )}
+                                                ) : null}
                                                 {editingGroupsLeft && (
                                                     <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                 )}
@@ -1857,7 +1859,11 @@ export function App() {
                                                         }}
                                                     />
                                                 ) : (
-                                                    <span className="text-sm font-bold text-slate-700 truncate">
+                                                    <span
+                                                        onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
+                                                        className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600 hover:underline"
+                                                        title="點擊編輯組套"
+                                                    >
                                                         {group.name}
                                                     </span>
                                                 )}
@@ -1868,9 +1874,7 @@ export function App() {
                                                         <button onClick={() => addTemplateToGroup('right', group.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">新增組套</button>
                                                         <button onClick={() => setEditingTemplatesGroup(null)} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 border border-slate-200">完成</button>
                                                     </>
-                                                ) : (
-                                                    <button onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'right' })} className="text-sm hover:opacity-70 transition-opacity" title="編輯組套">✏️</button>
-                                                )}
+                                                ) : null}
                                                 {editingGroupsRight && (
                                                     <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                 )}
