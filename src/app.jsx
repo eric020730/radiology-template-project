@@ -664,6 +664,7 @@ export function App() {
             setTabs(updatedTabs);
             saveToLocal(updatedTabs);
             setEditingTemplate(null);
+            setEditingTemplatesGroup(null); // 新增組套儲存後視為編輯完成，關閉編輯組套模式
         } else {
             const { id, side } = editingTemplate;
             const updatedTabs = tabs.map((tab, ti) => {
