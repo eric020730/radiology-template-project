@@ -24,35 +24,12 @@ function migrateV2ToV3(tabs) {
 }
 
 export function App() {
-    // 預設資料結構：分組版，每側為 Group[]，每組 { id, name, items: Template[] }
+    // 預設資料結構：完全空白，單一頁籤、無分組無組套
     const defaultTabs = [
         {
-            id: 'tab-chest',
-            name: 'Chest CT',
-            left: [
-                {
-                    id: 'g-chest-left-1',
-                    name: '標準',
-                    items: [
-                        { id: 'L-1', name: 'ctlungc+', content: 'Contrast-enhanced chest CT shows:\n1. No active lung lesion.\n2. No mediastinal lymphadenopathy.' },
-                        { id: 'L-2', name: 'ctlungc-', content: 'Non-contrast chest CT shows:\nNo definite lung nodule noted.' },
-                    ]
-                },
-            ],
-            right: []
-        },
-        {
-            id: 'tab-xray',
-            name: 'Xray',
-            left: [
-                {
-                    id: 'g-xray-left-1',
-                    name: '標準',
-                    items: [
-                        { id: 'XL-1', name: 'CXR Normal', content: 'The heart size is normal.\nThe bilateral lungs are clear.' },
-                    ]
-                },
-            ],
+            id: 'tab-default',
+            name: '新頁籤',
+            left: [],
             right: []
         }
     ];
