@@ -1307,7 +1307,7 @@ export function App() {
                                         onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
                                         className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all flex items-center justify-center shrink-0"
                                         title="刪除"
-                                        style={{ width: '20px', height: '20px' }}
+                                        style={{ width: '16px', height: '16px' }}
                                     >
                                         🗑️
                                     </button>
@@ -1317,7 +1317,7 @@ export function App() {
                                         onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
                                         className="text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all flex items-center justify-center shrink-0"
                                         title="編輯"
-                                        style={{ width: '20px', height: '20px' }}
+                                        style={{ width: '16px', height: '16px' }}
                                     >
                                         ✏️
                                     </button>
