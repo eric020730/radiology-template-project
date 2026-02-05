@@ -79,6 +79,7 @@ export function App() {
     const [dragTabState, setDragTabState] = useState(null); // { index } 正在拖曳的頁籤索引
     const [dropTabTarget, setDropTabTarget] = useState(null); // { index } 頁籤拖放目標（插入到該 index）
     const [dragTabGhost, setDragTabGhost] = useState(null);  // 拖曳頁籤時跟隨游標的幽靈 { x, y, width, height, name }
+    const [hoveredTemplateInEdit, setHoveredTemplateInEdit] = useState(null); // 編輯組套模式下，游標懸停的組套 key："side-groupId-templateId"
     const didDragRef = useRef(false);
     const dragPayloadRef = useRef(null); // 自訂拖曳時暫存來源 { sourceSide, sourceGroupId, sourceIndex }
     const dragOffsetRef = useRef({ x: 0, y: 0 });      // 拖曳起點在按鈕內的偏移
@@ -169,6 +170,11 @@ export function App() {
             };
         }
     }, [editingTemplatesGroup, dragState, editingTemplate]);
+
+    // 離開編輯組套模式時清除懸停狀態
+    useEffect(() => {
+        if (!editingTemplatesGroup) setHoveredTemplateInEdit(null);
+    }, [editingTemplatesGroup]);
 
     const saveToLocal = (newTabs, currentConfig = config) => {
         const data = {
@@ -914,6 +920,8 @@ export function App() {
     // --- UI Components ---
 
     const TemplateButton = ({ template, side, groupId, index, showEditButtons }) => {
+        const templateKey = `${side}-${groupId}-${template.id}`;
+        const isHoveredInEdit = showEditButtons && hoveredTemplateInEdit === templateKey;
         const isDragging = dragState?.template?.id === template.id;
         const isDropTarget = dropTarget?.side === side && dropTarget?.groupId === groupId && dropTarget?.index === index;
         const buttonClass = copiedId === template.id
@@ -988,6 +996,8 @@ export function App() {
                 data-side={side}
                 data-group-id={groupId}
                 data-index={index}
+                onMouseEnter={() => { if (showEditButtons) setHoveredTemplateInEdit(templateKey); }}
+                onMouseLeave={() => { if (showEditButtons) setHoveredTemplateInEdit(null); }}
                 className={`relative group rounded-lg h-12 transition-colors ${isDropTarget ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/80' : ''} ${isDragging ? 'opacity-50' : ''}`}
             >
                 <div className={`flex w-full h-full rounded-lg overflow-hidden ${buttonClass}`}>
@@ -1298,8 +1308,8 @@ export function App() {
                                     </div>
                                 </div>
                             )}
-                            {/* 編輯組套時：編輯／刪除按鈕，與小／中／大同一區塊位置 */}
-                            {showEditButtons && (
+                            {/* 編輯組套時：僅游標懸停的組套顯示編輯／刪除按鈕 */}
+                            {isHoveredInEdit && (
                                 <div className="flex items-center gap-[4px] ml-1" onMouseDown={(e) => e.stopPropagation()}>
                                     <button
                                         type="button"
