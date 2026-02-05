@@ -1500,15 +1500,15 @@ export function App() {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                     <label htmlFor="config-spreadsheet-id" className="text-sm font-medium text-slate-700 shrink-0 w-28 cursor-text">試算表 ID</label>
-                                    <input id="config-spreadsheet-id" type="text" placeholder="Spreadsheet ID" value={config.spreadsheetId} onChange={(e) => setConfig({...config, spreadsheetId: e.target.value})} onFocus={(e) => e.target.select()} className="flex-1 min-w-0 px-3 py-2 border rounded text-sm outline-none bg-white text-slate-800 focus:ring-2 focus:ring-blue-500" />
+                                    <input id="config-spreadsheet-id" type="text" placeholder="Spreadsheet ID" value={config.spreadsheetId} onChange={(e) => setConfig({...config, spreadsheetId: e.target.value})} onFocus={(e) => { e.target.select(); if (e.target.value) navigator.clipboard.writeText(e.target.value).catch(() => {}); }} className="flex-1 min-w-0 px-3 py-2 border rounded text-sm outline-none bg-white text-slate-800 focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <label htmlFor="config-api-key" className="text-sm font-medium text-slate-700 shrink-0 w-28 cursor-text">API 金鑰</label>
-                                    <input id="config-api-key" type="text" placeholder="API Key" value={config.apiKey} onChange={(e) => setConfig({...config, apiKey: e.target.value})} onFocus={(e) => e.target.select()} className="flex-1 min-w-0 px-3 py-2 border rounded text-sm outline-none bg-white text-slate-800 focus:ring-2 focus:ring-blue-500" />
+                                    <input id="config-api-key" type="text" placeholder="API Key" value={config.apiKey} onChange={(e) => setConfig({...config, apiKey: e.target.value})} onFocus={(e) => { e.target.select(); if (e.target.value) navigator.clipboard.writeText(e.target.value).catch(() => {}); }} className="flex-1 min-w-0 px-3 py-2 border rounded text-sm outline-none bg-white text-slate-800 focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <label htmlFor="config-script-url" className="text-sm font-medium text-slate-700 shrink-0 w-28 cursor-text">Apps Script 網址</label>
-                                    <input id="config-script-url" type="text" placeholder="Apps Script URL (Write)" value={config.scriptUrl} onChange={(e) => setConfig({...config, scriptUrl: e.target.value})} onFocus={(e) => e.target.select()} className="flex-1 min-w-0 px-3 py-2 border rounded text-sm outline-none bg-white text-slate-800 focus:ring-2 focus:ring-blue-500" />
+                                    <input id="config-script-url" type="text" placeholder="Apps Script URL (Write)" value={config.scriptUrl} onChange={(e) => setConfig({...config, scriptUrl: e.target.value})} onFocus={(e) => { e.target.select(); if (e.target.value) navigator.clipboard.writeText(e.target.value).catch(() => {}); }} className="flex-1 min-w-0 px-3 py-2 border rounded text-sm outline-none bg-white text-slate-800 focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 
                                 {/* 按鈕區域：包含匯入與匯出 */}
