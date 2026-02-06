@@ -149,13 +149,16 @@ export function App() {
         }
     }, [editingTemplatesGroup, dragState, editingTemplate]);
 
-    // 點擊頁籤欄以外區域時，離開「編輯頁籤名稱」模式（視同點擊完成）
+    // 點擊頁籤欄與分組區以外區域時，離開「編輯頁籤名稱」模式（視同點擊完成）
+    // 含 tabEditAreaRef、左/右分組容器，這樣點「新增分組」＋ 不會被當成點擊外部而關閉
     useEffect(() => {
         if (!editingTabName) return;
 
         const handleClickOutsideTabEdit = (event) => {
-            if (!tabEditAreaRef.current) return;
-            if (!tabEditAreaRef.current.contains(event.target)) {
+            const inTabEdit = tabEditAreaRef.current?.contains(event.target);
+            const inLeftGroups = leftGroupsContainerRef.current?.contains(event.target);
+            const inRightGroups = rightGroupsContainerRef.current?.contains(event.target);
+            if (!inTabEdit && !inLeftGroups && !inRightGroups) {
                 setEditingTabName(false);
             }
         };
