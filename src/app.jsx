@@ -2103,7 +2103,6 @@ export function App() {
             {editingTemplate && (
                 <div
                     className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-                    onClick={cancelTemplateEdit}
                 >
                     <div
                         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in"
