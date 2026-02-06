@@ -1717,7 +1717,7 @@ export function App() {
                                     setDropGroupTarget(null);
                                 }}
                             >
-                                {editingGroupsLeft ? '請點+新增分組' : dragGroupState ? '放開可移入此側' : '請點+新增分組'}
+                                {editingGroupsLeft ? '+新增分組' : dragGroupState ? '放開可移入此側' : '+新增分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -1900,7 +1900,7 @@ export function App() {
                                     setDropGroupTarget(null);
                                 }}
                             >
-                                {editingGroupsRight ? '請點+新增分組' : dragGroupState ? '放開可移入此側' : '請點+新增分組'}
+                                {editingGroupsRight ? '+新增分組' : dragGroupState ? '放開可移入此側' : '+新增分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
