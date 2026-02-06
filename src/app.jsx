@@ -169,6 +169,30 @@ export function App() {
         };
     }, [editingTabName]);
 
+    // 正在編輯分組名稱時，點擊該分組以外的區域 → 視為結束編輯；若未輸入內容（空白或仍為「新分組」）則刪除該分組
+    useEffect(() => {
+        if (!editingGroupName) return;
+
+        const handleClickOutsideGroup = (event) => {
+            const inDeleteModal = event.target.closest('[data-delete-confirm-modal]');
+            if (inDeleteModal) return;
+
+            const clickedGroup = event.target.closest('[data-group-container]');
+            const isCurrentGroup =
+                clickedGroup &&
+                clickedGroup.getAttribute('data-group-id') === editingGroupName.groupId &&
+                clickedGroup.getAttribute('data-group-side') === editingGroupName.side;
+            if (isCurrentGroup) return;
+
+            const input = document.querySelector(`[data-group-container][data-group-id="${editingGroupName.groupId}"][data-group-side="${editingGroupName.side}"] input`);
+            const valueFromInput = input?.value;
+            finishEditingGroupName(editingGroupName.side, editingGroupName.groupId, valueFromInput);
+        };
+
+        document.addEventListener('mousedown', handleClickOutsideGroup);
+        return () => document.removeEventListener('mousedown', handleClickOutsideGroup);
+    }, [editingGroupName, tabs]);
+
     // 離開編輯組套模式時清除懸停狀態
     useEffect(() => {
         if (!editingTemplatesGroup) setHoveredTemplateInEdit(null);
@@ -804,6 +828,30 @@ export function App() {
         saveToLocal(updatedTabs);
         setDeleteConfirmGroup(null);
         setEditingGroupName(prev => prev?.groupId === groupId ? null : prev);
+    };
+
+    // 結束編輯分組名稱時：若未輸入任何內容（空白或仍為「新分組」），則刪除該分組
+    // valueFromInput：可傳入輸入框即時值（blur/Enter 時傳入），避免 state 尚未更新而誤刪已改名的分組
+    const finishEditingGroupName = (side, groupId, valueFromInput) => {
+        const tab = tabs[activeTabIdx];
+        if (!tab) {
+            setEditingGroupName(null);
+            return;
+        }
+        const groups = side === 'left' ? tab.left : tab.right;
+        const group = groups?.find(g => g.id === groupId);
+        const name = (valueFromInput !== undefined ? String(valueFromInput).trim() : (group?.name?.trim() ?? ''));
+        const shouldRemove = name === '' || name === '新分組';
+        if (shouldRemove && group) {
+            const updatedTabs = tabs.map((t, ti) => {
+                if (ti !== activeTabIdx) return t;
+                const arr = side === 'left' ? (t.left || []).filter(g => g.id !== groupId) : (t.right || []).filter(g => g.id !== groupId);
+                return side === 'left' ? { ...t, left: arr } : { ...t, right: arr };
+            });
+            setTabs(updatedTabs);
+            saveToLocal(updatedTabs);
+        }
+        setEditingGroupName(null);
     };
 
     // 重新命名分組
@@ -1705,17 +1753,15 @@ export function App() {
                                                         }`}
                                                         value={group.name}
                                                         onChange={(e) => renameGroup('left', group.id, e.target.value)}
-                                                        onBlur={() => {
-                                                            // 只有在非「編輯組套」模式下，失去焦點時才關閉編輯
+                                                        onBlur={(e) => {
                                                             if (!(editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left')) {
-                                                                setEditingGroupName(null);
+                                                                finishEditingGroupName('left', group.id, e.target.value);
                                                             }
                                                         }}
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
-                                                                // 只有在非「編輯組套」模式下，按 Enter 才關閉編輯
                                                                 if (!(editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left')) {
-                                                                    setEditingGroupName(null);
+                                                                    finishEditingGroupName('left', group.id, e.target.value);
                                                                 }
                                                             }
                                                         }}
@@ -1791,18 +1837,16 @@ export function App() {
                                 })}
                             </div>
                         )}
-                        {editingTabName && (
-                            <div className="flex justify-center pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => addGroup('left')}
-                                    className="text-lg font-semibold text-slate-400 hover:text-green-600"
-                                    title="新增分組"
-                                >
-                                    ＋
-                                </button>
-                            </div>
-                        )}
+                        <div className="flex justify-center pt-2">
+                            <button
+                                type="button"
+                                onClick={() => addGroup('left')}
+                                className="text-lg font-semibold text-slate-400 hover:text-green-600"
+                                title="新增分組"
+                            >
+                                ＋
+                            </button>
+                        </div>
                     </div>
 
                     {/* 右側：自訂組套 */}
@@ -1892,17 +1936,15 @@ export function App() {
                                                         }`}
                                                         value={group.name}
                                                         onChange={(e) => renameGroup('right', group.id, e.target.value)}
-                                                        onBlur={() => {
-                                                            // 只有在非「編輯組套」模式下，失去焦點時才關閉編輯
+                                                        onBlur={(e) => {
                                                             if (!(editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right')) {
-                                                                setEditingGroupName(null);
+                                                                finishEditingGroupName('right', group.id, e.target.value);
                                                             }
                                                         }}
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
-                                                                // 只有在非「編輯組套」模式下，按 Enter 才關閉編輯
                                                                 if (!(editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right')) {
-                                                                    setEditingGroupName(null);
+                                                                    finishEditingGroupName('right', group.id, e.target.value);
                                                                 }
                                                             }
                                                         }}
@@ -1978,18 +2020,16 @@ export function App() {
                                 })}
                             </div>
                         )}
-                        {editingTabName && (
-                            <div className="flex justify-center pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => addGroup('right')}
-                                    className="text-lg font-semibold text-slate-400 hover:text-green-600"
-                                    title="新增分組"
-                                >
-                                    ＋
-                                </button>
-                            </div>
-                        )}
+                        <div className="flex justify-center pt-2">
+                            <button
+                                type="button"
+                                onClick={() => addGroup('right')}
+                                className="text-lg font-semibold text-slate-400 hover:text-green-600"
+                                title="新增分組"
+                            >
+                                ＋
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
