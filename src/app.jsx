@@ -56,6 +56,7 @@ export function App() {
     const [dragTabState, setDragTabState] = useState(null); // { index } 正在拖曳的頁籤索引
     const [dropTabTarget, setDropTabTarget] = useState(null); // { index } 頁籤拖放目標（插入到該 index）
     const [dragTabGhost, setDragTabGhost] = useState(null);  // 拖曳頁籤時跟隨游標的幽靈 { x, y, width, height, name }
+    const [tabBarHovered, setTabBarHovered] = useState(false); // 游標是否在頁籤列上（控制左右箭頭顯示）
     const [hoveredTemplateInEdit, setHoveredTemplateInEdit] = useState(null); // 編輯組套模式下，游標懸停的組套 key："side-groupId-templateId"
     const didDragRef = useRef(false);
     const dragPayloadRef = useRef(null); // 自訂拖曳時暫存來源 { sourceSide, sourceGroupId, sourceIndex }
@@ -65,6 +66,7 @@ export function App() {
     const leftGroupsContainerRef = useRef(null);  // 左側分組容器 ref
     const rightGroupsContainerRef = useRef(null); // 右側分組容器 ref
     const tabEditAreaRef = useRef(null);          // 當前頁籤標題與操作區域 ref
+    const tabScrollRef = useRef(null);            // 頁籤欄左右滑動容器 ref
     
     const [config, setConfig] = useState({
         spreadsheetId: '',
@@ -1450,8 +1452,26 @@ export function App() {
                             <span className="font-bold text-slate-700 hidden sm:block">放射科組套</span>
                         </div>
 
-                        {/* 頁籤滾動區 */}
-                        <div className="flex-1 mx-6 overflow-x-auto no-scrollbar flex items-center gap-1">
+                        {/* 頁籤滾動區：左右滑動 + 箭頭按鈕（游標移入頁籤列時才顯示箭頭） */}
+                        <div
+                            className="flex-1 flex items-center gap-1 min-w-0 mx-2"
+                            onMouseEnter={() => setTabBarHovered(true)}
+                            onMouseLeave={() => setTabBarHovered(false)}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => { tabScrollRef.current?.scrollBy({ left: -180, behavior: 'smooth' }); }}
+                                className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition ${tabBarHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                title="向左滑動"
+                                aria-label="向左滑動"
+                            >
+                                ‹
+                            </button>
+                            <div
+                                ref={tabScrollRef}
+                                className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-1 min-w-0"
+                                style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}
+                            >
                             {tabs.map((tab, idx) => {
                                 const isDraggingTab = dragTabState?.index === idx;
                                 const isDropHere = dropTabTarget?.index === idx;
@@ -1529,8 +1549,18 @@ export function App() {
                                     </div>
                                 );
                             })}
-                            <button onClick={addNewTab} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-green-600 transition" title="新增頁籤">
+                            <button onClick={addNewTab} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-green-600 transition shrink-0" title="新增頁籤">
                                 ＋
+                            </button>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => { tabScrollRef.current?.scrollBy({ left: 180, behavior: 'smooth' }); }}
+                                className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition ${tabBarHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                title="向右滑動"
+                                aria-label="向右滑動"
+                            >
+                                ›
                             </button>
                         </div>
 
