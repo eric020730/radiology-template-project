@@ -1687,7 +1687,7 @@ export function App() {
                                     setDropGroupTarget(null);
                                 }}
                             >
-                                {editingGroupsLeft ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「大組套」後可新增與刪除分組'}
+                                {editingGroupsLeft ? '請點+新增分組' : dragGroupState ? '放開可移入此側' : '請點+新增分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -1870,7 +1870,7 @@ export function App() {
                                     setDropGroupTarget(null);
                                 }}
                             >
-                                {editingGroupsRight ? '尚無分組，請點「新增分組」' : dragGroupState ? '放開可移入此側' : '尚無分組，請點「小組套」後可新增與刪除分組'}
+                                {editingGroupsRight ? '請點+新增分組' : dragGroupState ? '放開可移入此側' : '請點+新增分組'}
                             </div>
                         ) : (
                             <div className="space-y-4">
