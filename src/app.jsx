@@ -1629,7 +1629,7 @@ export function App() {
                                     />
                                 </div>
                                 
-                                {/* 按鈕區域：包含匯入與匯出 */}
+                                {/* 按鈕區域：匯入與匯出 */}
                                 <div className="flex flex-col gap-2">
                                     <div className="flex gap-2">
                                         <button onClick={connectGoogleSheets} className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 shadow-sm font-medium transition-colors">
@@ -1642,14 +1642,23 @@ export function App() {
                                 </div>
                             </div>
 
-                            <div className="text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <div className="text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col">
                                 <p className="font-bold mb-2 text-slate-700">Google Sheet 格式說明 (分組版)：</p>
-                                <ul className="list-disc pl-5 space-y-1 text-xs">
+                                <ul className="list-disc pl-5 space-y-1 text-xs flex-1">
                                     <li>每一個工作表 (Sheet) 對應上方一個頁籤。</li>
                                     <li><strong>左側</strong>：A=分組名、B=組套名稱、C=組套內容。</li>
                                     <li><strong>右側</strong>：D=分組名、E=組套名稱、F=組套內容。</li>
                                     <li>同一分組的多筆組套，分組名填相同即可；匯出時 Apps Script 需寫入 6 欄。</li>
                                 </ul>
+                                <div className="mt-3 flex items-center justify-end gap-4 text-xs text-slate-500">
+                                    <span>頁籤：{tabs.length}</span>
+                                    <span>分組：{tabs.reduce((acc, tab) => acc + (tab.left?.length || 0) + (tab.right?.length || 0), 0)}</span>
+                                    <span>組套：{tabs.reduce((acc, tab) => {
+                                        const left = (tab.left || []).reduce((s, g) => s + (g.items?.length || 0), 0);
+                                        const right = (tab.right || []).reduce((s, g) => s + (g.items?.length || 0), 0);
+                                        return acc + left + right;
+                                    }, 0)}</span>
+                                </div>
                             </div>
                         </div>
                         </div>
