@@ -1566,6 +1566,7 @@ export function App() {
 
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-400 font-mono hidden sm:inline">{syncStatus}</span>
+<<<<<<< HEAD
                             <button 
                                 type="button"
                                 onClick={() => setShowSettings(!showSettings)} 
@@ -1573,6 +1574,9 @@ export function App() {
                                 title="開啟設定"
                                 aria-label="開啟設定"
                             >
+=======
+                            <button onClick={() => setShowSettings(!showSettings)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition">
+>>>>>>> 6cc76bea287aa1f0e0b1b99cdfaacf247e8660e5
                                 ⚙️
                             </button>
                         </div>
@@ -1587,11 +1591,19 @@ export function App() {
                     <>
                         <button
                             type="button"
+<<<<<<< HEAD
                             className="fixed inset-0 z-[60] bg-slate-900/20 cursor-default"
                             onClick={() => setShowSettings(false)}
                             aria-label="關閉設定"
                         />
                         <div className="fixed left-0 right-0 top-0 z-[70] px-4 sm:px-6 lg:px-8 pt-20" onClick={(e) => e.stopPropagation()}>
+=======
+                            className="absolute inset-0 z-40 bg-slate-900/20 cursor-default"
+                            onClick={() => setShowSettings(false)}
+                            aria-label="關閉設定"
+                        />
+                        <div className="absolute left-0 right-0 top-0 z-50 px-4 sm:px-6 lg:px-8 pt-4" onClick={(e) => e.stopPropagation()}>
+>>>>>>> 6cc76bea287aa1f0e0b1b99cdfaacf247e8660e5
                             <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 animate-fade-in-down max-h-[85vh] overflow-y-auto">
                         <h2 className="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2">
                             ⚙️ 系統設定
