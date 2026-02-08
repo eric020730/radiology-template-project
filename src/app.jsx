@@ -79,25 +79,33 @@ export function App() {
     const activeTab = tabs[activeTabIdx] || tabs[0];
 
     useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY)
-            || localStorage.getItem('radiologyTemplatesConfig_v2'); // 相容 v2
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                if (data.tabs && Array.isArray(data.tabs)) {
-                    const tabsData = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
-                    setTabs(tabsData);
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY)
+                || localStorage.getItem('radiologyTemplatesConfig_v2'); // 相容 v2
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.tabs && Array.isArray(data.tabs)) {
+                        const tabsData = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
+                        setTabs(tabsData);
+                    }
+                    if (data.config) setConfig(data.config);
+                } catch (e) {
+                    console.error("讀取舊存檔失敗", e);
                 }
-                if (data.config) setConfig(data.config);
-            } catch (e) {
-                console.error("讀取舊存檔失敗", e);
             }
+        } catch (e) {
+            console.error("localStorage 存取失敗", e);
         }
     }, []);
 
     // 點擊外部區域關閉編輯分組模式
     useEffect(() => {
         const handleClickOutside = (event) => {
+            // 如果點擊在設定按鈕或設定面板上，不處理
+            if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]')) {
+                return;
+            }
             // 檢查是否點擊在左側分組容器外
             if (editingGroupsLeft && leftGroupsContainerRef.current && !leftGroupsContainerRef.current.contains(event.target)) {
                 setEditingGroupsLeft(false);
@@ -120,6 +128,11 @@ export function App() {
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!editingTemplatesGroup) return;
+            
+            // 如果點擊在設定按鈕或設定面板上，不處理
+            if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]')) {
+                return;
+            }
             
             // 如果正在拖曳，忽略點擊外部區域的邏輯
             if (didDragRef.current || dragState) return;
@@ -157,6 +170,10 @@ export function App() {
         if (!editingTabName) return;
 
         const handleClickOutsideTabEdit = (event) => {
+            // 如果點擊在設定按鈕或設定面板上，不處理
+            if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]')) {
+                return;
+            }
             const inTabEdit = tabEditAreaRef.current?.contains(event.target);
             const inLeftGroups = leftGroupsContainerRef.current?.contains(event.target);
             const inRightGroups = rightGroupsContainerRef.current?.contains(event.target);
@@ -176,6 +193,10 @@ export function App() {
         if (!editingGroupName) return;
 
         const handleClickOutsideGroup = (event) => {
+            // 如果點擊在設定按鈕或設定面板上，不處理
+            if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]')) {
+                return;
+            }
             const inDeleteModal = event.target.closest('[data-delete-confirm-modal]');
             if (inDeleteModal) return;
 
@@ -1444,7 +1465,7 @@ export function App() {
     return (
         <div className="bg-slate-50 min-h-screen flex flex-col font-sans">
             {/* 頂部導航列 */}
-            <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+            <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-[50]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
                         <div className="flex items-center gap-2">
@@ -1564,19 +1585,23 @@ export function App() {
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 relative z-[60]">
                             <span className="text-xs text-slate-400 font-mono hidden sm:inline">{syncStatus}</span>
-<<<<<<< HEAD
                             <button 
                                 type="button"
-                                onClick={() => setShowSettings(!showSettings)} 
-                                className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition relative z-10"
-                                title="開啟設定"
+                                data-settings-button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setShowSettings(!showSettings);
+                                }}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition relative z-[60] cursor-pointer"
                                 aria-label="開啟設定"
                             >
-=======
-                            <button onClick={() => setShowSettings(!showSettings)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition">
->>>>>>> 6cc76bea287aa1f0e0b1b99cdfaacf247e8660e5
                                 ⚙️
                             </button>
                         </div>
@@ -1591,19 +1616,11 @@ export function App() {
                     <>
                         <button
                             type="button"
-<<<<<<< HEAD
-                            className="fixed inset-0 z-[60] bg-slate-900/20 cursor-default"
+                            className="fixed inset-0 z-[55] bg-slate-900/20 cursor-default"
                             onClick={() => setShowSettings(false)}
                             aria-label="關閉設定"
                         />
-                        <div className="fixed left-0 right-0 top-0 z-[70] px-4 sm:px-6 lg:px-8 pt-20" onClick={(e) => e.stopPropagation()}>
-=======
-                            className="absolute inset-0 z-40 bg-slate-900/20 cursor-default"
-                            onClick={() => setShowSettings(false)}
-                            aria-label="關閉設定"
-                        />
-                        <div className="absolute left-0 right-0 top-0 z-50 px-4 sm:px-6 lg:px-8 pt-4" onClick={(e) => e.stopPropagation()}>
->>>>>>> 6cc76bea287aa1f0e0b1b99cdfaacf247e8660e5
+                        <div className="fixed left-0 right-0 top-0 z-[60] px-4 sm:px-6 lg:px-8 pt-4" data-settings-panel onClick={(e) => e.stopPropagation()}>
                             <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 animate-fade-in-down max-h-[85vh] overflow-y-auto">
                         <h2 className="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2">
                             ⚙️ 系統設定
