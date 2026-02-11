@@ -992,8 +992,8 @@ export function App() {
         const newConfig = { ...config, isConnected: true };
         setConfig(newConfig);
         saveToLocal(tabs, newConfig);
+        setShowSettings(false); // 一點「匯入」就先收起系統設定視窗
         await loadFromGoogleSheets();
-        setShowSettings(false);
     };
 
     // --- UI Components ---
