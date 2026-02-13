@@ -74,6 +74,13 @@ export function App() {
         scriptUrl: '',
         isConnected: false
     });
+    const [toast, setToast] = useState(null); // { message, type: 'success'|'error' }，3 秒後自動消失
+    const toastTimerRef = useRef(null);
+    const showToast = (message, type = 'success') => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToast({ message, type });
+        toastTimerRef.current = setTimeout(() => { setToast(null); toastTimerRef.current = null; }, 3000);
+    };
 
     // 取得當前頁籤的資料方便操作
     const activeTab = tabs[activeTabIdx] || tabs[0];
@@ -314,13 +321,13 @@ export function App() {
             setActiveTabIdx(0);
             saveToLocal(newTabs); // 更新本地
             setSyncStatus('匯入成功！');
-            alert(`✅ 成功匯入 ${newTabs.length} 個頁籤！`);
+            showToast(`已匯入 ${newTabs.length} 個頁籤`);
             setTimeout(() => setSyncStatus('已連接'), 2000);
 
         } catch (error) {
             console.error(error);
             setSyncStatus('匯入失敗');
-            alert('❌ 匯入失敗，請檢查 API Key 權限或 Sheet ID。');
+            showToast('匯入失敗，請檢查 API Key 或 Sheet ID', 'error');
         }
     };
 
@@ -341,10 +348,10 @@ export function App() {
             });
 
             setSyncStatus('匯出成功！');
-            alert('✅ 資料已成功發送至雲端 (請確認 Script 已支援多頁籤)！');
+            showToast('已發送至雲端');
             setTimeout(() => setSyncStatus('已連接'), 2000);
         } catch (error) {
-            alert('❌ 匯出失敗');
+            showToast('匯出失敗', 'error');
         }
     };
 
@@ -2225,6 +2232,17 @@ export function App() {
                 >
                     <span className="w-4 shrink-0 rounded-l-lg bg-slate-100/80" />
                     <span className="flex-1 px-3 py-3 flex items-center min-w-0 truncate">{dragGhost.name}</span>
+                </div>
+            )}
+            {/* Toast 提示：3 秒後淡出並略往上滑後消失 */}
+            {toast && (
+                <div
+                    className={`fixed left-1/2 top-6 z-[10000] px-5 py-3 rounded-lg shadow-lg text-sm font-medium text-white toast-disappear ${
+                        toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'
+                    }`}
+                    role="alert"
+                >
+                    {toast.message}
                 </div>
             )}
         </div>

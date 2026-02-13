@@ -75,6 +75,22 @@
     }
 }
 
+/* Toast：顯示約 3 秒，最後 0.4 秒淡出並略往上滑 */
+.toast-disappear {
+    animation: toastFadeOut 3s ease-out forwards;
+}
+
+@keyframes toastFadeOut {
+    0%, 86% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+}
+
 /* =========================================
    4. 輸入框背景色修復（防止瀏覽器自動填充導致背景變黑）
    ========================================= */
