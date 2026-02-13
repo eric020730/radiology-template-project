@@ -639,10 +639,11 @@ export function App() {
                 textToCopy = textToCopy.replace(/TEMP_LEFT_CN/g, '右');
             }
         } else if (side === 'bilateral') {
-            // B 按鈕：當內容中有 right/bilateral 時，將 right/ 刪除，只留下 bilateral
+            // B 按鈕：當內容中有 right/bilateral 時，將 right/ 刪除只留下 bilateral，並在 bilateral 後面第一個單字字尾加小寫 s
             if (hasRightSlashBilateral) {
-                // 匹配 right/bilateral 模式並替換為 bilateral
                 textToCopy = textToCopy.replace(/\bright\s*\/\s*bilateral\b/gi, 'bilateral');
+                // bilateral 後面的第一個單字字尾加小寫 s（例：bilateral wrist. → bilateral wrists.）
+                textToCopy = textToCopy.replace(/\bbilateral\b\s+(\w+)/i, (_match, word) => 'bilateral ' + word + 's');
             } else {
                 // 如果沒有 right/bilateral，複製原始內容
                 textToCopy = template.content;
