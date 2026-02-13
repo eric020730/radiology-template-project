@@ -642,8 +642,8 @@ export function App() {
             // B 按鈕：當內容中有 right/bilateral 時，將 right/ 刪除只留下 bilateral，並在 bilateral 後面第一個單字字尾加小寫 s
             if (hasRightSlashBilateral) {
                 textToCopy = textToCopy.replace(/\bright\s*\/\s*bilateral\b/gi, 'bilateral');
-                // bilateral 後面的第一個單字字尾加小寫 s（例：bilateral wrist. → bilateral wrists.）
-                textToCopy = textToCopy.replace(/\bbilateral\b\s+(\w+)/i, (_match, word) => 'bilateral ' + word + 's');
+                // bilateral 後面的每個單字字尾加小寫 s（例：bilateral wrist. → bilateral wrists.）
+                textToCopy = textToCopy.replace(/\bbilateral\b\s+(\w+)/gi, (_match, word) => 'bilateral ' + word + 's');
             } else {
                 // 如果沒有 right/bilateral，複製原始內容
                 textToCopy = template.content;
