@@ -1,0 +1,116 @@
+/* =========================================
+   1. 隱藏捲軸工具 (Tab 頁籤專用)
+   讓頁籤可以左右滑動，但不會出現醜醜的捲軸
+   ========================================= */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* 組套拖曳把手：確保可拖曳，外觀與按鈕一致 */
+.template-drag-handle {
+    -webkit-user-drag: element;
+    user-drag: element;
+    color: inherit;
+    outline: none;
+}
+.template-drag-handle:focus {
+    outline: none;
+}
+
+/* =========================================
+   2. 按鈕複製後的回饋動畫
+   ========================================= */
+.copied-animation {
+    animation: pulse 0.4s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        transform: scale(1); 
+    }
+    50% { 
+        transform: scale(0.97); /* 稍微縮小再彈回，手感比較好 */
+    }
+}
+
+/* =========================================
+   3. 介面進場動畫 (設定選單 & 彈窗)
+   對應 JSX 中的 animate-fade-in-down 與 animate-scale-in
+   ========================================= */
+
+/* 設定選單：由上往下滑入 */
+.animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out forwards;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 編輯視窗：由小變大彈出 */
+.animate-scale-in {
+    animation: scaleIn 0.2s ease-out forwards;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Toast：顯示約 3 秒，最後 0.4 秒淡出並略往上滑 */
+.toast-disappear {
+    animation: toastFadeOut 3s ease-out forwards;
+}
+
+@keyframes toastFadeOut {
+    0%, 86% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+}
+
+/* =========================================
+   4. 輸入框背景色修復（防止瀏覽器自動填充導致背景變黑）
+   ========================================= */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #1e293b !important;
+    background-color: white !important;
+    background-clip: padding-box !important;
+    color: #1e293b !important;
+}
+
+input[type="text"] {
+    background-color: white !important;
+    color: #1e293b !important;
+}
+
+textarea {
+    background-color: white !important;
+    color: #1e293b !important;
+}
