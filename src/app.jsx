@@ -46,6 +46,8 @@ export function App() {
     const [editingTemplatesGroup, setEditingTemplatesGroup] = useState(null); // { groupId, side } 正在編輯組套的分組，此模式下才顯示刪除/編輯按鈕
     const [editingTabName, setEditingTabName] = useState(false); // 是否正在修改頁籤名稱
     const [showSettings, setShowSettings] = useState(false);
+    const [breastNoduleGroupParams, setBreastNoduleGroupParams] = useState({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
+    const [lastDistKeyPressed, setLastDistKeyPressed] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
     const [dragState, setDragState] = useState(null);   // { template, sourceGroupId, sourceSide, sourceIndex }
@@ -197,6 +199,18 @@ export function App() {
             document.removeEventListener('mousedown', handleClickOutsideTabEdit);
         };
     }, [editingTabName, dragTabState]);
+
+    // 點擊「乳房結節描述」組套外時，尺寸與方位、距離數字歸零
+    useEffect(() => {
+        const handleClickOutsideBreastNodule = (event) => {
+            if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]') || event.target.closest('[data-delete-confirm-modal]')) return;
+            if (event.target.closest('[data-breast-nodule-group]')) return;
+            setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
+            setLastDistKeyPressed(null);
+        };
+        document.addEventListener('mousedown', handleClickOutsideBreastNodule);
+        return () => document.removeEventListener('mousedown', handleClickOutsideBreastNodule);
+    }, []);
 
     // 正在編輯分組名稱時，點擊該分組以外的區域 → 視為結束編輯；若未輸入內容（空白或仍為「新分組」）則刪除該分組
     useEffect(() => {
@@ -843,6 +857,82 @@ export function App() {
         setTabs(updatedTabs);
         saveToLocal(updatedTabs);
         setEditingGroupName({ groupId: newGroup.id, side });
+    };
+
+    const addBreastNoduleGroup = (side) => {
+        const newGroup = {
+            id: `g-${side}-breast-${Date.now()}`,
+            name: '乳房結節描述',
+            type: 'breastNodule',
+            items: []
+        };
+        const updatedTabs = [...tabs];
+        const tab = { ...updatedTabs[activeTabIdx] };
+        if (side === 'left') tab.left = [...(tab.left || []), newGroup];
+        else tab.right = [...(tab.right || []), newGroup];
+        updatedTabs[activeTabIdx] = tab;
+        setTabs(updatedTabs);
+        saveToLocal(updatedTabs);
+        setEditingGroupName({ groupId: newGroup.id, side });
+    };
+
+    const formatSizeDisplay = (str, placeholder) => {
+        if (!str) return placeholder;
+        if (str === '0') return '0';
+        if (str.includes('.')) return str;
+        return `0.${str}`;
+    };
+
+    const parseSizeValue = (str) => {
+        if (!str) return 0;
+        if (str.includes('.')) return parseFloat(str) || 0;
+        return parseFloat(`0.${str}`) || 0;
+    };
+
+    const applyBreastNoduleKeypad = (key) => {
+        setBreastNoduleGroupParams((p) => {
+            const { activeField, sizeWStr, sizeHStr, distStr } = p;
+            if (key === 'C') {
+                if (activeField === 'sizeW' || activeField === 'sizeH' || activeField === null) return { ...p, sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false };
+                return { ...p, distStr: '' };
+            }
+            if (activeField === null) {
+                if (key === '.') return p;
+                return { ...p, sizeWStr: key, activeField: 'sizeW', reEnterPending: false };
+            }
+            if (activeField === 'sizeW') {
+                if (p.reEnterPending && key !== '.') {
+                    return { ...p, sizeWStr: key, reEnterPending: false };
+                }
+                if (key === '.') {
+                    if (sizeWStr && !sizeWStr.includes('.') && sizeWStr !== '0') return { ...p, sizeWStr: sizeWStr + '.', reEnterPending: false };
+                    return p;
+                }
+                if (!sizeWStr || sizeWStr === '0') return { ...p, sizeWStr: key, reEnterPending: false };
+                if (sizeWStr.includes('.')) {
+                    if ((sizeWStr.split('.')[1] || '').length >= 1) return p;
+                    return { ...p, sizeWStr: sizeWStr + key, activeField: 'sizeH', reEnterPending: false };
+                }
+                return { ...p, sizeHStr: key, activeField: 'sizeH', reEnterPending: false };
+            }
+            if (activeField === 'sizeH') {
+                if (p.reEnterPending && key !== '.') {
+                    return { ...p, sizeHStr: key, reEnterPending: false };
+                }
+                if (key === '.') {
+                    if (sizeHStr && !sizeHStr.includes('.') && sizeHStr !== '0') return { ...p, sizeHStr: sizeHStr + '.', reEnterPending: false };
+                    return p;
+                }
+                if (!sizeHStr || sizeHStr === '0') return { ...p, sizeHStr: key, reEnterPending: false };
+                if (sizeHStr.includes('.')) {
+                    if ((sizeHStr.split('.')[1] || '').length >= 1) return p;
+                    return { ...p, sizeHStr: sizeHStr + key, reEnterPending: false };
+                }
+                return p;
+            }
+            const next = distStr + key;
+            return { ...p, distStr: next };
+        });
     };
 
     // 刪除分組（含確認）
@@ -1787,6 +1877,7 @@ export function App() {
                                         data-group-container
                                         data-group-id={group.id}
                                         data-group-side="left"
+                                        {...(group.type === 'breastNodule' && { 'data-breast-nodule-group': 'true' })}
                                         data-group-drop
                                         data-side="left"
                                         data-index={groupIndex}
@@ -1814,7 +1905,7 @@ export function App() {
                                     >
                                             <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left')) && (
+                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || (group.type === 'breastNodule' && editingGroupName?.groupId === group.id && editingGroupName?.side === 'left')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -1833,8 +1924,8 @@ export function App() {
                                                     <input
                                                         autoFocus={editingGroupName?.groupId === group.id && editingGroupName?.side === 'left'}
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
-                                                            editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' 
-                                                                ? '' 
+                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule'
+                                                                ? ''
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
                                                         value={group.name}
@@ -1854,7 +1945,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
+                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'left' }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -1863,45 +1954,115 @@ export function App() {
                                                 )}
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
-                                                {editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
+                                                {group.type === 'breastNodule' ? (
+                                                    editingGroupsLeft ? <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button> : null
+                                                ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
                                                     <>
-                                                        <button
-                                                            onClick={() => showDeleteGroupConfirm(group.id, 'left')}
-                                                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
-                                                            title="刪除分組"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                        <button
-                                                            onClick={() => addTemplateToGroup('left', group.id)}
-                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
-                                                            title="新增組套"
-                                                        >
-                                                            +
-                                                        </button>
+                                                        <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
+                                                        <button onClick={() => addTemplateToGroup('left', group.id)} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <button
-                                                            onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }}
-                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
-                                                            title="新增組套"
-                                                        >
-                                                            +
-                                                        </button>
+                                                        <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
                                                         {editingGroupsLeft && (
-                                                            <button
-                                                                onClick={() => showDeleteGroupConfirm(group.id, 'left')}
-                                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
-                                                                title="刪除分組"
-                                                            >
-                                                                🗑️
-                                                            </button>
+                                                            <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                         )}
                                                     </>
                                                 )}
                                             </div>
                                         </div>
+                                        {group.type === 'breastNodule' ? (
+                                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                    <p className="text-xs font-bold text-slate-600 mb-2">尺寸 (cm)</p>
+                                                    <div className="flex items-center justify-center gap-1 mb-2">
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
+                                                        <span className="text-slate-400">×</span>
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
+                                                    </div>
+                                                    <div className="relative flex justify-center items-center mx-auto shrink-0 mt-5 w-full" style={{ maxWidth: '140px', aspectRatio: '80/48' }}>
+                                                        <svg viewBox="0 0 80 48" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
+                                                            <ellipse cx="40" cy="24" rx="36" ry="20" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
+                                                        </svg>
+                                                        <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
+                                                            {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                    <p className="text-xs font-bold text-slate-600 mb-2">方位與距離</p>
+                                                    <div className="relative flex justify-center items-center mx-auto shrink-0 w-full" style={{ maxWidth: '160px', aspectRatio: '1/1' }}>
+                                                        <svg viewBox="0 0 200 200" className="w-full h-full absolute inset-0">
+                                                            <circle cx="100" cy="100" r="82" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" style={{ pointerEvents: 'none' }} />
+                                                            <circle cx="100" cy="100" r="58" fill="white" stroke="#e2e8f0" strokeWidth="1" style={{ pointerEvents: 'none' }} />
+                                                            {[12,1,2,3,4,5,6,7,8,9,10,11].map((h) => {
+                                                                const angleDeg = (270 + h * 30) % 360;
+                                                                const angleRad = (angleDeg * Math.PI) / 180;
+                                                                const r = 70;
+                                                                const x = 100 + r * Math.cos(angleRad);
+                                                                const y = 100 + r * Math.sin(angleRad);
+                                                                const isSelected = breastNoduleGroupParams.clock === h;
+                                                                return (
+                                                                    <g key={h} onClick={() => setBreastNoduleGroupParams(p => ({ ...p, clock: h }))} style={{ cursor: 'pointer' }} transform={`translate(${x},${y})`}>
+                                                                        <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? '#3b82f6' : '#e2e8f0'} stroke={isSelected ? '#2563eb' : '#cbd5e1'} strokeWidth={2} />
+                                                                        <foreignObject x={-13} y={-13} width={26} height={26}>
+                                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{h}</div>
+                                                                        </foreignObject>
+                                                                    </g>
+                                                                );
+                                                            })}
+                                                        </svg>
+                                                        <div className="relative z-10 flex justify-center items-center pointer-events-none" style={{ width: '100%', height: '100%' }}>
+                                                            <div className="pointer-events-auto grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
+                                                                {['4','5','6','1','2','3','N'].map((k) => (
+                                                                    <button
+                                                                        key={`dist-${k}`}
+                                                                        type="button"
+                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${lastDistKeyPressed === k ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                                                                        onClick={() => {
+                                                                            setLastDistKeyPressed(k);
+                                                                            if (breastNoduleGroupParams.clock == null) { showToast('請先選擇鐘點', 'error'); return; }
+                                                                            const newDistStr = k === 'C' ? '' : (k === 'N' ? breastNoduleGroupParams.distStr : breastNoduleGroupParams.distStr + k);
+                                                                            if (k !== 'N') setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
+                                                                            const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                            const c = breastNoduleGroupParams.clock;
+                                                                            const text = k === 'N'
+                                                                                ? `A ${w}x${h}cm small hypoechoic nodule at ${c}'/N cm from nipple.`
+                                                                                : `A ${w}x${h}cm small hypoechoic nodule at ${c}'/${parseFloat(newDistStr) || 0} cm from nipple.`;
+                                                                            const doCopy = () => { showToast('已複製到剪貼簿'); };
+                                                                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                                                                navigator.clipboard.writeText(text).then(doCopy).catch(() => {
+                                                                                    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                                                                                    doCopy();
+                                                                                });
+                                                                            } else {
+                                                                                const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                                                                                doCopy();
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        {k}
+                                                                    </button>
+                                                                ))}
+                                                                <button
+                                                                    type="button"
+                                                                    className={`col-span-2 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${lastDistKeyPressed === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                                                                    onClick={() => {
+                                                                        setLastDistKeyPressed(null);
+                                                                        setBreastNoduleGroupParams(p => ({ ...p, distStr: '0', clock: null }));
+                                                                    }}
+                                                                >
+                                                                    C
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
                                         <div className="grid grid-cols-2 gap-3">
                                             {group.items.map((t, idx) => (
                                                 <TemplateButton key={t.id} template={t} side="left" groupId={group.id} index={idx} showEditButtons={editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left'} />
@@ -1918,20 +2079,14 @@ export function App() {
                                                 </div>
                                             )}
                                         </div>
+                                        )}
                                     </div>
                                     );
                                 })}
                             </div>
                         )}
                         <div className="flex justify-center pt-2">
-                            <button
-                                type="button"
-                                onClick={() => addGroup('left')}
-                                className="text-lg font-semibold text-slate-400 hover:text-green-600"
-                                title="新增分組"
-                            >
-                                ＋
-                            </button>
+                            <button type="button" onClick={() => addGroup('left')} className="text-lg font-semibold text-slate-400 hover:text-green-600" title="新增分組">＋</button>
                         </div>
                     </div>
 
@@ -1970,6 +2125,7 @@ export function App() {
                                         data-group-container
                                         data-group-id={group.id}
                                         data-group-side="right"
+                                        {...(group.type === 'breastNodule' && { 'data-breast-nodule-group': 'true' })}
                                         data-group-drop
                                         data-side="right"
                                         data-index={groupIndex}
@@ -1997,7 +2153,7 @@ export function App() {
                                     >
                                             <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right')) && (
+                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || (group.type === 'breastNodule' && editingGroupName?.groupId === group.id && editingGroupName?.side === 'right')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -2016,8 +2172,8 @@ export function App() {
                                                     <input
                                                         autoFocus={editingGroupName?.groupId === group.id && editingGroupName?.side === 'right'}
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
-                                                            editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' 
-                                                                ? '' 
+                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule'
+                                                                ? ''
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
                                                         value={group.name}
@@ -2037,7 +2193,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
+                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'right' }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2046,45 +2202,80 @@ export function App() {
                                                 )}
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
-                                                {editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
+                                                {group.type === 'breastNodule' ? (
+                                                    editingGroupsRight ? <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button> : null
+                                                ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
                                                     <>
-                                                        <button
-                                                            onClick={() => showDeleteGroupConfirm(group.id, 'right')}
-                                                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
-                                                            title="刪除分組"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                        <button
-                                                            onClick={() => addTemplateToGroup('right', group.id)}
-                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
-                                                            title="新增組套"
-                                                        >
-                                                            +
-                                                        </button>
+                                                        <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
+                                                        <button onClick={() => addTemplateToGroup('right', group.id)} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <button
-                                                            onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }}
-                                                            className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none"
-                                                            title="新增組套"
-                                                        >
-                                                            +
-                                                        </button>
+                                                        <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
                                                         {editingGroupsRight && (
-                                                            <button
-                                                                onClick={() => showDeleteGroupConfirm(group.id, 'right')}
-                                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
-                                                                title="刪除分組"
-                                                            >
-                                                                🗑️
-                                                            </button>
+                                                            <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                         )}
                                                     </>
                                                 )}
                                             </div>
                                         </div>
+                                        {group.type === 'breastNodule' ? (
+                                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                    <p className="text-xs font-bold text-slate-600 mb-2">尺寸 (cm)</p>
+                                                    <div className="flex items-center justify-center gap-1 mb-2">
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
+                                                        <span className="text-slate-400">×</span>
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
+                                                    </div>
+                                                    <div className="relative flex justify-center items-center mx-auto shrink-0 w-full" style={{ maxWidth: '140px', aspectRatio: '80/48' }}>
+                                                        <svg viewBox="0 0 80 48" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
+                                                            <ellipse cx="40" cy="24" rx="36" ry="20" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
+                                                        </svg>
+                                                        <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
+                                                            {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                    <p className="text-xs font-bold text-slate-600 mb-2">方位與距離</p>
+                                                    <div className="flex justify-center mb-2 shrink-0 mx-auto w-full" style={{ maxWidth: '160px', aspectRatio: '1/1' }}>
+                                                        <svg viewBox="0 0 200 200" className="w-full h-full">
+                                                            <circle cx="100" cy="100" r="82" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+                                                            <circle cx="100" cy="100" r="58" fill="white" stroke="#e2e8f0" strokeWidth="1" />
+                                                            {[12,1,2,3,4,5,6,7,8,9,10,11].map((h) => {
+                                                                const angleDeg = (270 + h * 30) % 360;
+                                                                const angleRad = (angleDeg * Math.PI) / 180;
+                                                                const r = 70;
+                                                                const x = 100 + r * Math.cos(angleRad);
+                                                                const y = 100 + r * Math.sin(angleRad);
+                                                                const isSelected = breastNoduleGroupParams.clock === h;
+                                                                return (
+                                                                    <g key={h} onClick={() => setBreastNoduleGroupParams(p => ({ ...p, clock: h }))} style={{ cursor: 'pointer' }} transform={`translate(${x},${y})`}>
+                                                                        <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? '#3b82f6' : '#e2e8f0'} stroke={isSelected ? '#2563eb' : '#cbd5e1'} strokeWidth={2} />
+                                                                        <foreignObject x={-13} y={-13} width={26} height={26}>
+                                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{h}</div>
+                                                                        </foreignObject>
+                                                                    </g>
+                                                                );
+                                                            })}
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex items-center justify-center gap-1 mb-2">
+                                                        <span className="text-xs text-slate-500">距乳頭</span>
+                                                        <span className="px-2 py-1 rounded text-sm font-mono min-w-[2.5rem] bg-white border border-slate-200">{breastNoduleGroupParams.distStr || '0'}</span>
+                                                        <span className="text-xs text-slate-500">cm</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-5 gap-1 w-[160px] mx-auto">
+                                                        {['1','2','3','4','5','6','7','8','9','0','C'].map((k) => (
+                                                            <button key={k} type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, distStr: k === 'C' ? '' : p.distStr + k }))} className="w-7 h-7 rounded bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
                                         <div className="grid grid-cols-2 gap-3">
                                             {group.items.map((t, idx) => (
                                                 <TemplateButton key={t.id} template={t} side="right" groupId={group.id} index={idx} showEditButtons={editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right'} />
@@ -2101,20 +2292,14 @@ export function App() {
                                                 </div>
                                             )}
                                         </div>
+                                        )}
                                     </div>
                                     );
                                 })}
                             </div>
                         )}
                         <div className="flex justify-center pt-2">
-                            <button
-                                type="button"
-                                onClick={() => addGroup('right')}
-                                className="text-lg font-semibold text-slate-400 hover:text-green-600"
-                                title="新增分組"
-                            >
-                                ＋
-                            </button>
+                            <button type="button" onClick={() => addGroup('right')} className="text-lg font-semibold text-slate-400 hover:text-green-600" title="新增分組">＋</button>
                         </div>
                     </div>
                 </div>
