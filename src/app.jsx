@@ -24,19 +24,12 @@ function migrateV2ToV3(tabs) {
 }
 
 export function App() {
-    // 預設資料結構：單一頁籤，左側預先帶有「乳房結節描述」專用組套
+    // 預設資料結構：完全空白，單一頁籤、無分組無組套
     const defaultTabs = [
         {
             id: 'tab-default',
             name: '新頁籤',
-            left: [
-                {
-                    id: 'g-left-breast-default',
-                    name: '乳房結節描述',
-                    type: 'breastNodule',
-                    items: []
-                }
-            ],
+            left: [],
             right: []
         }
     ];
