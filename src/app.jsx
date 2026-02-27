@@ -1842,7 +1842,7 @@ export function App() {
                                         </div>
                                         {group.type === 'breastNodule' ? (
                                             <div className="grid grid-cols-2 gap-4 mt-2">
-                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">尺寸 (cm)</p>
                                                     <div className="flex items-center justify-center gap-1 mb-2">
                                                         <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
@@ -1860,7 +1860,7 @@ export function App() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">方位與距離</p>
                                                     <div className="relative flex justify-center items-center mx-auto shrink-0 w-full" style={{ maxWidth: '160px', aspectRatio: '1/1' }}>
                                                         <svg viewBox="0 0 200 200" className="w-full h-full absolute inset-0">
@@ -2154,7 +2154,7 @@ export function App() {
                                         </div>
                                         {group.type === 'breastNodule' ? (
                                             <div className="grid grid-cols-2 gap-4 mt-2">
-                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">尺寸 (cm)</p>
                                                     <div className="flex items-center justify-center gap-1 mb-2">
                                                         <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
@@ -2172,7 +2172,7 @@ export function App() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                                <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">方位與距離</p>
                                                     <div className="flex justify-center mb-2 shrink-0 mx-auto w-full" style={{ maxWidth: '160px', aspectRatio: '1/1' }}>
                                                         <svg viewBox="0 0 200 200" className="w-full h-full">
