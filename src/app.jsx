@@ -118,6 +118,9 @@ export function App() {
                         const baseTabs = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
                         const tabsData = ensureBreastNoduleTypes(baseTabs);
                         setTabs(tabsData);
+                        if (typeof data.activeTabIdx === 'number' && data.activeTabIdx >= 0 && data.activeTabIdx < tabsData.length) {
+                            setActiveTabIdx(data.activeTabIdx);
+                        }
                     }
                     if (data.config) setConfig(data.config);
                 } catch (e) {
@@ -266,11 +269,12 @@ export function App() {
         if (!editingTemplatesGroup) setHoveredTemplateInEdit(null);
     }, [editingTemplatesGroup]);
 
-    const saveToLocal = (newTabs, currentConfig = config) => {
+    const saveToLocal = (newTabs, currentConfig = config, currentActiveTabIdx = activeTabIdx) => {
         const data = {
             tabs: newTabs,
             config: currentConfig,
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
+            activeTabIdx: currentActiveTabIdx
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     };
@@ -376,7 +380,7 @@ export function App() {
                 setBreastNoduleSentenceTemplate(breastNoduleTemplateFromSheets);
             }
             setActiveTabIdx(0);
-            saveToLocal(newTabs); // 更新本地
+            saveToLocal(newTabs, config, 0); // 更新本地，記錄目前頁籤為 0
             setSyncStatus('匯入成功！');
             showToast(`已匯入 ${newTabs.length} 個頁籤`);
             setTimeout(() => setSyncStatus('已連接'), 2000);
@@ -2114,7 +2118,9 @@ export function App() {
                                                                         onClick={() => {
                                                                             setLastDistKeyPressed(k);
                                                                             if (breastNoduleGroupParams.clock == null) { showToast('請先選擇鐘點', 'error'); return; }
-                                                                            const newDistStr = k === 'C' ? '' : (k === 'N' ? breastNoduleGroupParams.distStr : breastNoduleGroupParams.distStr + k);
+                                                                            const newDistStr = k === 'C'
+                                                                                ? ''
+                                                                                : (k === 'N' ? breastNoduleGroupParams.distStr : k); // 數字鍵一律視為重新輸入距離（單一位數）
                                                                             if (k !== 'N') setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
                                                                             const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
                                                                             const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
