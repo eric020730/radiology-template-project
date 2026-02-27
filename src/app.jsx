@@ -1536,7 +1536,7 @@ export function App() {
                                     </div>
                                 );
                             })}
-                            <button onClick={addNewTab} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-green-600 transition shrink-0" title="新增頁籤">
+                            <button onClick={addNewTab} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition shrink-0" title="新增頁籤">
                                 ＋
                             </button>
                             </div>
@@ -1828,11 +1828,11 @@ export function App() {
                                                 ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
                                                     <>
                                                         <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
-                                                        <button onClick={() => addTemplateToGroup('left', group.id)} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
+                                                        <button onClick={() => addTemplateToGroup('left', group.id)} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 select-none" title="新增組套">+</button>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
+                                                        <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'left' }); addTemplateToGroup('left', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 select-none" title="新增組套">+</button>
                                                         {editingGroupsLeft && (
                                                             <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                         )}
@@ -2008,7 +2008,7 @@ export function App() {
                             </div>
                         )}
                         <div className="flex justify-center pt-2">
-                            <button type="button" onClick={() => addGroup('left')} className="text-lg font-semibold text-slate-400 hover:text-green-600" title="新增分組">＋</button>
+                            <button type="button" onClick={() => addGroup('left')} className="text-lg font-semibold text-slate-400 hover:text-slate-700" title="新增分組">＋</button>
                         </div>
                     </div>
 
@@ -2134,11 +2134,11 @@ export function App() {
                                                 ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
                                                     <>
                                                         <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
-                                                        <button onClick={() => addTemplateToGroup('right', group.id)} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
+                                                        <button onClick={() => addTemplateToGroup('right', group.id)} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 select-none" title="新增組套">+</button>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 select-none" title="新增組套">+</button>
+                                                        <button onClick={() => { setEditingTemplatesGroup({ groupId: group.id, side: 'right' }); addTemplateToGroup('right', group.id); }} className="text-sm font-bold leading-none w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 select-none" title="新增組套">+</button>
                                                         {editingGroupsRight && (
                                                             <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                         )}
@@ -2226,7 +2226,7 @@ export function App() {
                             </div>
                         )}
                         <div className="flex justify-center pt-2">
-                            <button type="button" onClick={() => addGroup('right')} className="text-lg font-semibold text-slate-400 hover:text-green-600" title="新增分組">＋</button>
+                            <button type="button" onClick={() => addGroup('right')} className="text-lg font-semibold text-slate-400 hover:text-slate-700" title="新增分組">＋</button>
                         </div>
                     </div>
                 </div>
