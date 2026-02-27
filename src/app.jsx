@@ -89,6 +89,24 @@ export function App() {
     // 取得當前頁籤的資料方便操作
     const activeTab = tabs[activeTabIdx] || tabs[0];
 
+    // 將名稱為「乳房結節描述」的分組補上 type，避免因匯入或外部腳本改動而失去特殊 UI
+    const ensureBreastNoduleTypes = (tabsData) => {
+        if (!Array.isArray(tabsData)) return tabsData;
+        return tabsData.map(tab => ({
+            ...tab,
+            left: (tab.left || []).map(g =>
+                g.name === '乳房結節描述'
+                    ? { ...g, type: g.type || 'breastNodule' }
+                    : g
+            ),
+            right: (tab.right || []).map(g =>
+                g.name === '乳房結節描述'
+                    ? { ...g, type: g.type || 'breastNodule' }
+                    : g
+            )
+        }));
+    };
+
     useEffect(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY)
@@ -97,7 +115,8 @@ export function App() {
                 try {
                     const data = JSON.parse(saved);
                     if (data.tabs && Array.isArray(data.tabs)) {
-                        const tabsData = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
+                        const baseTabs = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
+                        const tabsData = ensureBreastNoduleTypes(baseTabs);
                         setTabs(tabsData);
                     }
                     if (data.config) setConfig(data.config);
