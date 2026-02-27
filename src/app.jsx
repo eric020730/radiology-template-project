@@ -64,7 +64,7 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
     const isDragging = dragState?.template?.id === template.id;
     const isDropTarget = dropTarget?.side === side && dropTarget?.groupId === groupId && dropTarget?.index === index;
     const buttonClass = copiedId === template.id
-        ? 'bg-blue-500 text-white shadow-inner scale-[0.98] copied-animation'
+        ? 'bg-blue-50 border-2 border-blue-400 text-blue-600 shadow-md'
         : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 shadow-sm hover:shadow-md';
 
     const { hasLeft, hasRight, hasRightSlashBilateral } = hasLeftRight(template.content);
@@ -165,7 +165,7 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
                                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLeftRight(template, 'right'); }}
                                     className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
                                         copiedId === `${template.id}-right`
-                                            ? 'bg-emerald-500 text-white scale-110'
+                                            ? 'bg-blue-500 text-white scale-110'
                                             : 'bg-pink-50 text-pink-400 hover:bg-pink-100 active:scale-95'
                                     }`}
                                     title={hasRightSlashBilateral ? "刪除 bilateral" : "複製原始內容"}
@@ -177,7 +177,7 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
                                         onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLeftRight(template, 'bilateral'); }}
                                         className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
                                             copiedId === `${template.id}-bilateral`
-                                                ? 'bg-emerald-500 text-white scale-110'
+                                                ? 'bg-blue-500 text-white scale-110'
                                                 : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200 active:scale-95'
                                         }`}
                                         title="刪除 right/，只留下 bilateral"
@@ -189,7 +189,7 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
                                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLeftRight(template, 'left'); }}
                                     className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
                                         copiedId === `${template.id}-left`
-                                            ? 'bg-emerald-500 text-white scale-110'
+                                            ? 'bg-blue-500 text-white scale-110'
                                             : 'bg-sky-100 text-sky-500 hover:bg-sky-200 active:scale-95'
                                     }`}
                                     title={hasRightSlashBilateral ? "刪除 bilateral 且 right 改成 left" : "複製內容並將 left/right 互換"}
@@ -200,26 +200,26 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
                         {hasEnlarged && !showEditButtons && (
                             <div className="flex items-center gap-[4px] ml-1">
                                 <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyEnlarged(template, 'small'); }}
-                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-small` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-small` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                     title="替換為 No enlarged" style={{ width: '20px', height: '20px' }}>小</button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyEnlarged(template, 'medium'); }}
-                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-medium` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-medium` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                     title="替換為 Borderline enlarged" style={{ width: '20px', height: '20px' }}>中</button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyEnlarged(template, 'large'); }}
-                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-large` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-large` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                     title="替換為 Enlarged" style={{ width: '20px', height: '20px' }}>大</button>
                             </div>
                         )}
                         {hasSeverity && !showEditButtons && (
                             <div className="flex items-center gap-[4px] ml-1">
                                 <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copySeverity(template, 'mild'); }}
-                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-mild` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-mild` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                     title="替換為 Mild" style={{ width: '20px', height: '20px' }}>輕</button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copySeverity(template, 'moderate'); }}
-                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-moderate` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-moderate` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                     title="替換為 Moderate" style={{ width: '20px', height: '20px' }}>中</button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copySeverity(template, 'severe'); }}
-                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-severe` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-severe` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                     title="替換為 Severe" style={{ width: '20px', height: '20px' }}>重</button>
                             </div>
                         )}
@@ -227,21 +227,21 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
                             <div className="flex items-center gap-1 ml-1">
                                 <div className="flex flex-col gap-0.5">
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'rul'); }}
-                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rul` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rul` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="替換為 RUL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>上</button>
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'rml'); }}
-                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rml` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rml` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="替換為 RML" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>中</button>
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'rll'); }}
-                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rll` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rll` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="替換為 RLL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>下</button>
                                 </div>
                                 <div className="flex flex-col gap-0.5">
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'lul'); }}
-                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-lul` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-lul` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="替換為 LUL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>上</button>
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'lll'); }}
-                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-lll` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-lll` ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="替換為 LLL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>下</button>
                                 </div>
                             </div>
