@@ -23,6 +23,275 @@ function migrateV2ToV3(tabs) {
     }));
 }
 
+// --- 純函式：不依賴 App 狀態，可安全放在模組層級 ---
+function hasLeftRight(content) {
+    if (!content) return { hasLeft: false, hasRight: false, hasRightSlashBilateral: false };
+    const hasLeft = /\bleft\b|左/i.test(content);
+    const hasRight = /\bright\b|右/i.test(content);
+    const hasRightSlashBilateral = /\bright\s*\/\s*bilateral\b/i.test(content);
+    return { hasLeft, hasRight, hasRightSlashBilateral };
+}
+
+function hasEnlargedPattern(content) {
+    if (!content) return false;
+    return /No\s+enlarged\s*\/\s*Borderline\s+enlarged\s*\/\s*Enlarged/i.test(content);
+}
+
+function hasSeverityPattern(content) {
+    if (!content) return false;
+    return /Mild\s*\/\s*Moderate\s*\/\s*Severe/i.test(content);
+}
+
+function hasLobePattern(content) {
+    if (!content) return false;
+    return /\b(RUL|RML|RLL|LUL|LLL)\b/i.test(content);
+}
+
+// --- TemplateButton：定義在模組層級以確保 Preact 有穩定的元件引用 ---
+function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }) {
+    const {
+        copiedId, hoveredTemplateInEdit, setHoveredTemplateInEdit,
+        dragState, dropTarget, dragGroupState,
+        didDragRef, dragOffsetRef, dragPayloadRef,
+        setDragState, setDragGhost, setDropTarget,
+        moveTemplateRef,
+        copyToClipboard, copyLeftRight, copyEnlarged, copySeverity, copyLobe,
+        showDeleteConfirm, startEdit,
+    } = ctx;
+
+    const templateKey = `${side}-${groupId}-${template.id}`;
+    const isHoveredInEdit = showEditButtons && hoveredTemplateInEdit === templateKey;
+    const isDragging = dragState?.template?.id === template.id;
+    const isDropTarget = dropTarget?.side === side && dropTarget?.groupId === groupId && dropTarget?.index === index;
+    const buttonClass = copiedId === template.id
+        ? 'bg-emerald-500 text-white shadow-inner scale-[0.98] copied-animation'
+        : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 shadow-sm hover:shadow-md';
+
+    const { hasLeft, hasRight, hasRightSlashBilateral } = hasLeftRight(template.content);
+    const hasEnlarged = hasEnlargedPattern(template.content);
+    const hasSeverity = hasSeverityPattern(template.content);
+    const hasLobe = hasLobePattern(template.content);
+
+    const startCustomDrag = (e) => {
+        e.preventDefault();
+        if (!showEditButtons) return;
+        didDragRef.current = true;
+        const payload = { sourceSide: side, sourceGroupId: groupId, sourceIndex: index };
+        dragPayloadRef.current = payload;
+        setDragState({ template, ...payload });
+        const card = e.currentTarget.closest('[data-drop-zone]');
+        if (card) {
+            const rect = card.getBoundingClientRect();
+            dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            setDragGhost({ x: rect.left, y: rect.top, width: rect.width, height: rect.height, name: template.name });
+        }
+        const onMove = (ev) => {
+            setDragGhost(prev => prev ? {
+                ...prev,
+                x: ev.clientX - dragOffsetRef.current.x,
+                y: ev.clientY - dragOffsetRef.current.y
+            } : null);
+            const el = document.elementFromPoint(ev.clientX, ev.clientY);
+            const zone = el?.closest?.('[data-drop-zone]');
+            if (zone) {
+                const s = zone.getAttribute('data-side');
+                const g = zone.getAttribute('data-group-id');
+                const i = zone.getAttribute('data-index');
+                if (s && g && i !== null) setDropTarget({ side: s, groupId: g, index: parseInt(i, 10) });
+            } else setDropTarget(null);
+        };
+        const onUp = (ev) => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            setDragGhost(null);
+            const el = document.elementFromPoint(ev.clientX, ev.clientY);
+            const zone = el?.closest?.('[data-drop-zone]');
+            const src = dragPayloadRef.current;
+            if (zone && src) {
+                const tSide = zone.getAttribute('data-side');
+                const tGroupId = zone.getAttribute('data-group-id');
+                const tIndex = parseInt(zone.getAttribute('data-index'), 10);
+                if (tSide && tGroupId && !isNaN(tIndex) && moveTemplateRef.current) {
+                    moveTemplateRef.current(src.sourceSide, src.sourceGroupId, src.sourceIndex, tSide, tGroupId, tIndex);
+                }
+            }
+            dragPayloadRef.current = null;
+            setDragState(null);
+            setDropTarget(null);
+            setTimeout(() => { didDragRef.current = false; }, 100);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
+    return (
+        <div
+            data-drop-zone
+            data-side={side}
+            data-group-id={groupId}
+            data-index={index}
+            onMouseEnter={() => { if (showEditButtons) setHoveredTemplateInEdit(templateKey); }}
+            onMouseLeave={() => { if (showEditButtons) setHoveredTemplateInEdit(null); }}
+            className={`relative group rounded-lg h-12 transition-colors ${isDropTarget ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/80' : ''} ${isDragging ? 'opacity-50' : ''}`}
+        >
+            <div className={`flex w-full h-full rounded-lg overflow-hidden ${buttonClass}`}>
+                <span
+                    role="button"
+                    tabIndex={0}
+                    onMouseDown={showEditButtons ? startCustomDrag : undefined}
+                    onClick={showEditButtons ? (ev) => ev.preventDefault() : () => { copyToClipboard(template); }}
+                    onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (!showEditButtons) copyToClipboard(template); } }}
+                    className={`template-drag-handle w-4 shrink-0 touch-none rounded-l-lg block select-none flex items-center justify-center ${
+                        showEditButtons ? 'cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600' : 'cursor-pointer'
+                    }`}
+                    title={showEditButtons ? '拖曳可移動' : '點擊複製'}
+                >
+                </span>
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (showEditButtons) return;
+                        copyToClipboard(template);
+                    }}
+                    onMouseDown={showEditButtons ? startCustomDrag : undefined}
+                    className={`flex-1 px-3 py-3 rounded-r-lg font-medium transition-all duration-200 text-left flex justify-between items-center min-w-0 border-0 bg-transparent text-inherit relative h-full ${showEditButtons ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                >
+                    <span className="truncate mr-2">{template.name}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                        {(hasLeft || hasRight) && !showEditButtons && (
+                            <div className="flex items-center gap-[4px] ml-1">
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLeftRight(template, 'right'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
+                                        copiedId === `${template.id}-right`
+                                            ? 'bg-emerald-500 text-white scale-110'
+                                            : 'bg-pink-50 text-pink-400 hover:bg-pink-100 active:scale-95'
+                                    }`}
+                                    title={hasRightSlashBilateral ? "刪除 bilateral" : "複製原始內容"}
+                                    style={{ width: '20px', height: '20px' }}
+                                >R</button>
+                                {hasRightSlashBilateral && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLeftRight(template, 'bilateral'); }}
+                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
+                                            copiedId === `${template.id}-bilateral`
+                                                ? 'bg-emerald-500 text-white scale-110'
+                                                : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200 active:scale-95'
+                                        }`}
+                                        title="刪除 right/，只留下 bilateral"
+                                        style={{ width: '20px', height: '20px' }}
+                                    >B</button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLeftRight(template, 'left'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
+                                        copiedId === `${template.id}-left`
+                                            ? 'bg-emerald-500 text-white scale-110'
+                                            : 'bg-sky-100 text-sky-500 hover:bg-sky-200 active:scale-95'
+                                    }`}
+                                    title={hasRightSlashBilateral ? "刪除 bilateral 且 right 改成 left" : "複製內容並將 left/right 互換"}
+                                    style={{ width: '20px', height: '20px' }}
+                                >L</button>
+                            </div>
+                        )}
+                        {hasEnlarged && !showEditButtons && (
+                            <div className="flex items-center gap-[4px] ml-1">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyEnlarged(template, 'small'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-small` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    title="替換為 No enlarged" style={{ width: '20px', height: '20px' }}>小</button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyEnlarged(template, 'medium'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-medium` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    title="替換為 Borderline enlarged" style={{ width: '20px', height: '20px' }}>中</button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyEnlarged(template, 'large'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-enlarged-large` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    title="替換為 Enlarged" style={{ width: '20px', height: '20px' }}>大</button>
+                            </div>
+                        )}
+                        {hasSeverity && !showEditButtons && (
+                            <div className="flex items-center gap-[4px] ml-1">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copySeverity(template, 'mild'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-mild` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    title="替換為 Mild" style={{ width: '20px', height: '20px' }}>輕</button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copySeverity(template, 'moderate'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-moderate` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    title="替換為 Moderate" style={{ width: '20px', height: '20px' }}>中</button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copySeverity(template, 'severe'); }}
+                                    className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${copiedId === `${template.id}-severity-severe` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                    title="替換為 Severe" style={{ width: '20px', height: '20px' }}>重</button>
+                            </div>
+                        )}
+                        {hasLobe && !showEditButtons && (
+                            <div className="flex items-center gap-1 ml-1">
+                                <div className="flex flex-col gap-0.5">
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'rul'); }}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rul` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        title="替換為 RUL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>上</button>
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'rml'); }}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rml` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        title="替換為 RML" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>中</button>
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'rll'); }}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-rll` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        title="替換為 RLL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>下</button>
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'lul'); }}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-lul` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        title="替換為 LUL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>上</button>
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyLobe(template, 'lll'); }}
+                                        className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${copiedId === `${template.id}-lobe-lll` ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        title="替換為 LLL" style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}>下</button>
+                                </div>
+                            </div>
+                        )}
+                        {isHoveredInEdit && (
+                            <div className="flex items-center gap-[4px] ml-1" onMouseDown={(e) => e.stopPropagation()}>
+                                <button type="button" onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
+                                    className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-all flex items-center justify-center shrink-0"
+                                    title="刪除" style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, fontSize: 12, lineHeight: 1 }}>🗑️</button>
+                                <button type="button" onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
+                                    className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-all flex items-center justify-center shrink-0"
+                                    title="編輯" style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, fontSize: 12, lineHeight: 1 }}>✏️</button>
+                            </div>
+                        )}
+                    </div>
+                </button>
+            </div>
+            {dragGroupState && (
+                <div
+                    className="absolute inset-0 min-w-full min-h-full z-[9999] rounded-lg cursor-grabbing pointer-events-auto"
+                    style={{ background: 'rgba(0,0,0,0.001)' }}
+                    onDragEnter={(e) => {
+                        e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
+                        const container = e.currentTarget.closest('[data-group-container]');
+                        if (container) { const s = container.getAttribute('data-side'); const i = container.getAttribute('data-index'); if (s && i != null) ctx.setDropGroupTarget({ side: s, index: parseInt(i, 10) }); }
+                    }}
+                    onDragOver={(e) => {
+                        e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
+                        const container = e.currentTarget.closest('[data-group-container]');
+                        if (container) { const s = container.getAttribute('data-side'); const i = container.getAttribute('data-index'); if (s && i != null) ctx.setDropGroupTarget({ side: s, index: parseInt(i, 10) }); }
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (dragGroupState && ctx.dropGroupTarget) {
+                            if (dragGroupState.side === 'left' && ctx.dropGroupTarget.side === 'left') ctx.reorderGroups('left', dragGroupState.index, ctx.dropGroupTarget.index);
+                            else if (dragGroupState.side === 'right' && ctx.dropGroupTarget.side === 'left') ctx.moveGroupBetweenSides('right', dragGroupState.index, 'left', ctx.dropGroupTarget.index);
+                            else if (dragGroupState.side === 'right' && ctx.dropGroupTarget.side === 'right') ctx.reorderGroups('right', dragGroupState.index, ctx.dropGroupTarget.index);
+                            else if (dragGroupState.side === 'left' && ctx.dropGroupTarget.side === 'right') ctx.moveGroupBetweenSides('left', dragGroupState.index, 'right', ctx.dropGroupTarget.index);
+                        }
+                        ctx.setDragGroupState(null); ctx.setDropGroupTarget(null);
+                    }}
+                    aria-hidden
+                />
+            )}
+        </div>
+    );
+}
+
 export function App() {
     // 預設資料結構：完全空白，單一頁籤、無分組無組套
     const defaultTabs = [
@@ -48,6 +317,7 @@ export function App() {
     const [showSettings, setShowSettings] = useState(false);
     const [breastNoduleGroupParams, setBreastNoduleGroupParams] = useState({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
     const [breastNoduleSentenceTemplate, setBreastNoduleSentenceTemplate] = useState("A {W}x{H}cm small hypoechoic nodule at {C}'{D} from nipple.");
+    const [breastNodulePendingTexts, setBreastNodulePendingTexts] = useState([]); // 暫存多顆結節的句子，搭配 M 鍵使用
     const [editingSentenceTemplate, setEditingSentenceTemplate] = useState(false);
     const [lastDistKeyPressed, setLastDistKeyPressed] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
@@ -225,12 +495,16 @@ export function App() {
     }, [editingTabName, dragTabState]);
 
     // 點擊「乳房結節描述」組套外時，尺寸與方位、距離數字歸零
+    // 使用 functional updater 並檢查值是否真的改變，避免不必要的 re-render
     useEffect(() => {
         const handleClickOutsideBreastNodule = (event) => {
             if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]') || event.target.closest('[data-delete-confirm-modal]')) return;
             if (event.target.closest('[data-breast-nodule-group]')) return;
-            setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
-            setLastDistKeyPressed(null);
+            setBreastNoduleGroupParams(prev => {
+                if (prev.sizeWStr === '0' && prev.sizeHStr === '0' && prev.clock === null && prev.distStr === '0' && prev.activeField === null) return prev;
+                return { sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null };
+            });
+            setLastDistKeyPressed(prev => prev === null ? prev : null);
         };
         document.addEventListener('mousedown', handleClickOutsideBreastNodule);
         return () => document.removeEventListener('mousedown', handleClickOutsideBreastNodule);
@@ -454,43 +728,6 @@ export function App() {
     // --- 編輯與操作邏輯 ---
 
     // 檢查內容是否包含 left 和 right（支援各種格式）
-    const hasLeftRight = (content) => {
-        if (!content) return { hasLeft: false, hasRight: false, hasRightSlashBilateral: false };
-        // 檢查是否包含 left 或 right 關鍵字（不區分大小寫）
-        // 使用 \b 單詞邊界確保只匹配完整的單詞（前後必須是空格、標點符號或字符串邊界）
-        // 例如：bright 中的 right 不會被匹配，因為 r 前面是 b 不是邊界
-        // 支援英文：left, Left, LEFT, right, Right, RIGHT（必須是完整單詞）
-        // 支援中文：左, 右
-        const hasLeft = /\bleft\b|左/i.test(content);
-        const hasRight = /\bright\b|右/i.test(content);
-        // 檢查是否包含 right/bilateral 模式（right斜線bilateral）
-        const hasRightSlashBilateral = /\bright\s*\/\s*bilateral\b/i.test(content);
-        return { hasLeft, hasRight, hasRightSlashBilateral };
-    };
-
-    // 檢查內容是否包含 No enlarged/Borderline enlarged/Enlarged 模式
-    const hasEnlargedPattern = (content) => {
-        if (!content) return false;
-        const pattern = /No\s+enlarged\s*\/\s*Borderline\s+enlarged\s*\/\s*Enlarged/i;
-        return pattern.test(content);
-    };
-
-    // 檢查內容是否包含 Mild/Moderate/Severe 模式
-    const hasSeverityPattern = (content) => {
-        if (!content) return false;
-        // 匹配 "Mild/Moderate/Severe" 模式（不區分大小寫，允許空格變化）
-        const pattern = /Mild\s*\/\s*Moderate\s*\/\s*Severe/i;
-        return pattern.test(content);
-    };
-
-    // 檢查內容是否包含 RUL/RML/RLL/LUL/LLL 模式
-    const hasLobePattern = (content) => {
-        if (!content) return false;
-        // 匹配 RUL, RML, RLL, LUL, LLL 中的任意一個（不區分大小寫）
-        const pattern = /\b(RUL|RML|RLL|LUL|LLL)\b/i;
-        return pattern.test(content);
-    };
-
     // 解析內容，提取 left 或 right 部分
     const extractLeftRight = (content, side) => {
         if (!content) return '';
@@ -1184,475 +1421,19 @@ export function App() {
         await loadFromGoogleSheets();
     };
 
-    // --- UI Components ---
-
-    const TemplateButton = ({ template, side, groupId, index, showEditButtons }) => {
-        const templateKey = `${side}-${groupId}-${template.id}`;
-        const isHoveredInEdit = showEditButtons && hoveredTemplateInEdit === templateKey;
-        const isDragging = dragState?.template?.id === template.id;
-        const isDropTarget = dropTarget?.side === side && dropTarget?.groupId === groupId && dropTarget?.index === index;
-        const buttonClass = copiedId === template.id
-            ? 'bg-emerald-500 text-white shadow-inner scale-[0.98] copied-animation'
-            : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 shadow-sm hover:shadow-md';
-        
-        // 檢查內容是否包含 left、right 和 right/bilateral
-        // 注意：每次組件渲染時都會重新計算，當組套內容更新時會自動更新按鈕顯示狀態
-        const { hasLeft, hasRight, hasRightSlashBilateral } = hasLeftRight(template.content);
-        // 檢查內容是否包含 No enlarged/Borderline enlarged/Enlarged 模式
-        const hasEnlarged = hasEnlargedPattern(template.content);
-        // 檢查內容是否包含 Mild/Moderate/Severe 模式
-        const hasSeverity = hasSeverityPattern(template.content);
-        // 檢查內容是否包含 RUL/RML/RLL/LUL/LLL 模式
-        const hasLobe = hasLobePattern(template.content);
-        const startCustomDrag = (e) => {
-            e.preventDefault();
-            if (!showEditButtons) return; // 僅在「編輯組套」模式下才允許拖曳
-            didDragRef.current = true;
-            const payload = { sourceSide: side, sourceGroupId: groupId, sourceIndex: index };
-            dragPayloadRef.current = payload;
-            setDragState({ template, ...payload });
-            const card = e.currentTarget.closest('[data-drop-zone]');
-            if (card) {
-                const rect = card.getBoundingClientRect();
-                dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-                setDragGhost({ x: rect.left, y: rect.top, width: rect.width, height: rect.height, name: template.name });
-            }
-            const onMove = (ev) => {
-                setDragGhost(prev => prev ? {
-                    ...prev,
-                    x: ev.clientX - dragOffsetRef.current.x,
-                    y: ev.clientY - dragOffsetRef.current.y
-                } : null);
-                const el = document.elementFromPoint(ev.clientX, ev.clientY);
-                const zone = el?.closest?.('[data-drop-zone]');
-                if (zone) {
-                    const s = zone.getAttribute('data-side');
-                    const g = zone.getAttribute('data-group-id');
-                    const i = zone.getAttribute('data-index');
-                    if (s && g && i !== null) setDropTarget({ side: s, groupId: g, index: parseInt(i, 10) });
-                } else setDropTarget(null);
-            };
-            const onUp = (ev) => {
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-                setDragGhost(null);
-                const el = document.elementFromPoint(ev.clientX, ev.clientY);
-                const zone = el?.closest?.('[data-drop-zone]');
-                const src = dragPayloadRef.current;
-                if (zone && src) {
-                    const tSide = zone.getAttribute('data-side');
-                    const tGroupId = zone.getAttribute('data-group-id');
-                    const tIndex = parseInt(zone.getAttribute('data-index'), 10);
-                    if (tSide && tGroupId && !isNaN(tIndex) && moveTemplateRef.current) {
-                        moveTemplateRef.current(src.sourceSide, src.sourceGroupId, src.sourceIndex, tSide, tGroupId, tIndex);
-                    }
-                }
-                dragPayloadRef.current = null;
-                setDragState(null);
-                setDropTarget(null);
-                // 延遲重置 didDragRef，避免拖曳結束時立即觸發點擊外部區域的邏輯
-                setTimeout(() => { didDragRef.current = false; }, 100);
-            };
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-        };
-
-        return (
-            <div
-                data-drop-zone
-                data-side={side}
-                data-group-id={groupId}
-                data-index={index}
-                onMouseEnter={() => { if (showEditButtons) setHoveredTemplateInEdit(templateKey); }}
-                onMouseLeave={() => { if (showEditButtons) setHoveredTemplateInEdit(null); }}
-                className={`relative group rounded-lg h-12 transition-colors ${isDropTarget ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/80' : ''} ${isDragging ? 'opacity-50' : ''}`}
-            >
-                <div className={`flex w-full h-full rounded-lg overflow-hidden ${buttonClass}`}>
-                    {/* 左側窄條：編輯組套時可拖曳，否則與主按鈕同為複製 */}
-                    <span
-                        role="button"
-                        tabIndex={0}
-                        onMouseDown={showEditButtons ? startCustomDrag : undefined}
-                        onClick={showEditButtons ? (ev) => ev.preventDefault() : () => { if (!didDragRef.current) copyToClipboard(template); }}
-                        onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (!showEditButtons) copyToClipboard(template); } }}
-                        className={`template-drag-handle w-4 shrink-0 touch-none rounded-l-lg block select-none flex items-center justify-center ${
-                            showEditButtons ? 'cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600' : 'cursor-pointer'
-                        }`}
-                        title={showEditButtons ? '拖曳可移動' : '點擊複製'}
-                    >
-                    </span>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (showEditButtons) return; // 編輯組套時整顆按鈕為拖曳，不觸發複製
-                            if (didDragRef.current) return;
-                            copyToClipboard(template);
-                        }}
-                        onMouseDown={showEditButtons ? startCustomDrag : undefined}
-                        className={`flex-1 px-3 py-3 rounded-r-lg font-medium transition-all duration-200 text-left flex justify-between items-center min-w-0 border-0 bg-transparent text-inherit relative h-full ${showEditButtons ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                    >
-                        <span className="truncate mr-2">{template.name}</span>
-                        <div className="flex items-center gap-1 shrink-0">
-                            {/* Left/Right/Bilateral 快速複製按鈕 - 貼在按鈕內部右側（編輯組套時隱藏） */}
-                            {/* 只要內容包含 left 或 right，就顯示 R 和 L 按鈕 */}
-                            {/* 當內容包含 right/bilateral 時，顯示 B 按鈕，並將 L / B / R 的視覺位置調整為 R 在左、L 在右 */}
-                            {(hasLeft || hasRight) && !showEditButtons && (
-                                <div className="flex items-center gap-[4px] ml-1">
-                                    {/* R 按鈕：改到左邊 - 正方形、字體 10px、置中 */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copyLeftRight(template, 'right');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-right`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-pink-50 text-pink-400 hover:bg-pink-100 active:scale-95'
-                                        }`}
-                                        title={hasRightSlashBilateral ? "刪除 bilateral" : "複製原始內容"}
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        R
-                                    </button>
-                                    {/* B 按鈕：維持在中間（如果有 right/bilateral） */}
-                                    {hasRightSlashBilateral && (
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                copyLeftRight(template, 'bilateral');
-                                            }}
-                                            className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                                copiedId === `${template.id}-bilateral`
-                                                    ? 'bg-emerald-500 text-white scale-110'
-                                                    : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200 active:scale-95'
-                                            }`}
-                                            title="刪除 right/，只留下 bilateral"
-                                            style={{ width: '20px', height: '20px' }}
-                                        >
-                                            B
-                                        </button>
-                                    )}
-                                    {/* L 按鈕：改到右邊 */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copyLeftRight(template, 'left');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-left`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-sky-100 text-sky-500 hover:bg-sky-200 active:scale-95'
-                                        }`}
-                                        title={hasRightSlashBilateral ? "刪除 bilateral 且 right 改成 left" : "複製內容並將 left/right 互換"}
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        L
-                                    </button>
-                                </div>
-                            )}
-                            {/* Enlarged 快速複製按鈕 - 當內容包含 No enlarged/Borderline enlarged/Enlarged 時顯示 */}
-                            {hasEnlarged && !showEditButtons && (
-                                <div className="flex items-center gap-[4px] ml-1">
-                                    {/* 小按鈕：顯示 No enlarged - 正方形、字體 10px、置中 */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copyEnlarged(template, 'small');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-enlarged-small`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                        }`}
-                                        title="替換為 No enlarged"
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        小
-                                    </button>
-                                    {/* 中按鈕：顯示 Borderline enlarged */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copyEnlarged(template, 'medium');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-enlarged-medium`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                        }`}
-                                        title="替換為 Borderline enlarged"
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        中
-                                    </button>
-                                    {/* 大按鈕：顯示 Enlarged */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copyEnlarged(template, 'large');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-enlarged-large`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                        }`}
-                                        title="替換為 Enlarged"
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        大
-                                    </button>
-                                </div>
-                            )}
-                            {/* Severity 快速複製按鈕 - 當內容包含 Mild/Moderate/Severe 時顯示 */}
-                            {hasSeverity && !showEditButtons && (
-                                <div className="flex items-center gap-[4px] ml-1">
-                                    {/* 輕按鈕：顯示 Mild - 正方形、字體 10px、置中 */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copySeverity(template, 'mild');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-severity-mild`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                        }`}
-                                        title="替換為 Mild"
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        輕
-                                    </button>
-                                    {/* 中按鈕：顯示 Moderate */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copySeverity(template, 'moderate');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-severity-moderate`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                        }`}
-                                        title="替換為 Moderate"
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        中
-                                    </button>
-                                    {/* 重按鈕：顯示 Severe */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            copySeverity(template, 'severe');
-                                        }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${
-                                            copiedId === `${template.id}-severity-severe`
-                                                ? 'bg-emerald-500 text-white scale-110'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                        }`}
-                                        title="替換為 Severe"
-                                        style={{ width: '20px', height: '20px' }}
-                                    >
-                                        重
-                                    </button>
-                                </div>
-                            )}
-                            {/* Lobe 快速複製按鈕 - 當內容包含 RUL/RML/RLL/LUL/LLL 時顯示 */}
-                            {hasLobe && !showEditButtons && (
-                                <div className="flex items-center gap-1 ml-1">
-                                    {/* 左邊三個按鈕：上、中、下（對應 RUL, RML, RLL） */}
-                                    <div className="flex flex-col gap-0.5">
-                                        {/* 上按鈕：顯示 RUL */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                copyLobe(template, 'rul');
-                                            }}
-                                            className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${
-                                                copiedId === `${template.id}-lobe-rul`
-                                                    ? 'bg-emerald-500 text-white scale-110'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                            }`}
-                                            title="替換為 RUL"
-                                            style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}
-                                        >
-                                            上
-                                        </button>
-                                        {/* 中按鈕：顯示 RML */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                copyLobe(template, 'rml');
-                                            }}
-                                            className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${
-                                                copiedId === `${template.id}-lobe-rml`
-                                                    ? 'bg-emerald-500 text-white scale-110'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                            }`}
-                                            title="替換為 RML"
-                                            style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}
-                                        >
-                                            中
-                                        </button>
-                                        {/* 下按鈕：顯示 RLL */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                copyLobe(template, 'rll');
-                                            }}
-                                            className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${
-                                                copiedId === `${template.id}-lobe-rll`
-                                                    ? 'bg-emerald-500 text-white scale-110'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                            }`}
-                                            title="替換為 RLL"
-                                            style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}
-                                        >
-                                            下
-                                        </button>
-                                    </div>
-                                    {/* 右邊兩個按鈕：上、下（對應 LUL, LLL） */}
-                                    <div className="flex flex-col gap-0.5">
-                                        {/* 上按鈕：顯示 LUL */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                copyLobe(template, 'lul');
-                                            }}
-                                            className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${
-                                                copiedId === `${template.id}-lobe-lul`
-                                                    ? 'bg-emerald-500 text-white scale-110'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                            }`}
-                                            title="替換為 LUL"
-                                            style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}
-                                        >
-                                            上
-                                        </button>
-                                        {/* 下按鈕：顯示 LLL */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                copyLobe(template, 'lll');
-                                            }}
-                                            className={`text-[8px] font-bold px-1 py-0.5 rounded transition-all z-10 relative ${
-                                                copiedId === `${template.id}-lobe-lll`
-                                                    ? 'bg-emerald-500 text-white scale-110'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                                            }`}
-                                            title="替換為 LLL"
-                                            style={{ minWidth: '16px', minHeight: '16px', lineHeight: '1' }}
-                                        >
-                                            下
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            {/* 編輯組套時：僅游標懸停的組套顯示編輯／刪除按鈕 */}
-                            {isHoveredInEdit && (
-                                <div className="flex items-center gap-[4px] ml-1" onMouseDown={(e) => e.stopPropagation()}>
-                                    <button
-                                        type="button"
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        onClick={(e) => { e.stopPropagation(); showDeleteConfirm(template, side); }}
-                                        className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-all flex items-center justify-center shrink-0"
-                                        title="刪除"
-                                        style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, fontSize: 12, lineHeight: 1 }}
-                                    >
-                                        🗑️
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        onClick={(e) => { e.stopPropagation(); startEdit(template, side); }}
-                                        className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-all flex items-center justify-center shrink-0"
-                                        title="編輯"
-                                        style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, fontSize: 12, lineHeight: 1 }}
-                                    >
-                                        ✏️
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </button>
-                </div>
-                {/* 拖曳分組時：透明遮罩置於最上層，統一接收 drag 事件，避免游標在組套按鈕上出現紅色禁止 */}
-                {dragGroupState && (
-                    <div
-                        className="absolute inset-0 min-w-full min-h-full z-[9999] rounded-lg cursor-grabbing pointer-events-auto"
-                        style={{ background: 'rgba(0,0,0,0.001)' }}
-                        onDragEnter={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = 'move';
-                            const container = e.currentTarget.closest('[data-group-container]');
-                            if (container) {
-                                const s = container.getAttribute('data-side');
-                                const i = container.getAttribute('data-index');
-                                if (s && i != null) setDropGroupTarget({ side: s, index: parseInt(i, 10) });
-                            }
-                        }}
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = 'move';
-                            const container = e.currentTarget.closest('[data-group-container]');
-                            if (container) {
-                                const s = container.getAttribute('data-side');
-                                const i = container.getAttribute('data-index');
-                                if (s && i != null) setDropGroupTarget({ side: s, index: parseInt(i, 10) });
-                            }
-                        }}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (dragGroupState && dropGroupTarget) {
-                                if (dragGroupState.side === 'left' && dropGroupTarget.side === 'left') {
-                                    reorderGroups('left', dragGroupState.index, dropGroupTarget.index);
-                                } else if (dragGroupState.side === 'right' && dropGroupTarget.side === 'left') {
-                                    moveGroupBetweenSides('right', dragGroupState.index, 'left', dropGroupTarget.index);
-                                } else if (dragGroupState.side === 'right' && dropGroupTarget.side === 'right') {
-                                    reorderGroups('right', dragGroupState.index, dropGroupTarget.index);
-                                } else if (dragGroupState.side === 'left' && dropGroupTarget.side === 'right') {
-                                    moveGroupBetweenSides('left', dragGroupState.index, 'right', dropGroupTarget.index);
-                                }
-                            }
-                            setDragGroupState(null);
-                            setDropGroupTarget(null);
-                        }}
-                        aria-hidden
-                    />
-                )}
-            </div>
-        );
+    // --- 建立 TemplateButton 所需的 context ---
+    const templateButtonCtx = {
+        copiedId, hoveredTemplateInEdit, setHoveredTemplateInEdit,
+        dragState, dropTarget, dragGroupState,
+        didDragRef, dragOffsetRef, dragPayloadRef,
+        setDragState, setDragGhost, setDropTarget,
+        moveTemplateRef,
+        copyToClipboard, copyLeftRight, copyEnlarged, copySeverity, copyLobe,
+        showDeleteConfirm, startEdit,
+        dropGroupTarget, setDropGroupTarget, setDragGroupState,
+        reorderGroups, moveGroupBetweenSides,
     };
+
 
     return (
         <div className="bg-slate-50 min-h-screen flex flex-col font-sans">
@@ -2113,52 +1894,89 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 flex justify-center items-center pointer-events-none" style={{ width: '100%', height: '100%' }}>
                                                             <div className="pointer-events-auto grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
-                                                                {['4','5','6','1','2','3','N'].map((k) => (
+                                                                {['4','5','6','1','2','3','C','N','M'].map((k) => (
                                                                     <button
                                                                         key={`dist-${k}`}
                                                                         type="button"
-                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${lastDistKeyPressed === k ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
+                                                                            lastDistKeyPressed === k
+                                                                                ? (breastNoduleGroupParams.clock == null
+                                                                                    ? 'bg-red-500 border-red-600 text-white'
+                                                                                    : 'bg-blue-500 border-blue-600 text-white')
+                                                                                : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'
+                                                                        }`}
                                                                         onClick={() => {
                                                                             setLastDistKeyPressed(k);
-                                                                            if (breastNoduleGroupParams.clock == null) { showToast('請先選擇鐘點', 'error'); return; }
-                                                                            const newDistStr = k === 'C'
-                                                                                ? ''
-                                                                                : (k === 'N' ? breastNoduleGroupParams.distStr : k); // 數字鍵一律視為重新輸入距離（單一位數）
-                                                                            if (k !== 'N') setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            // 若尚未選擇鐘點，只將按下的鍵標成紅色提醒，不做任何距離或複製動作
+                                                                            if (breastNoduleGroupParams.clock == null) { return; }
+                                                                            // 若長或寬為 0，視為尚未輸入完整尺寸，不產生句子也不更新距離
                                                                             const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
                                                                             const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                            if (w === 0 || h === 0) { return; }
+                                                                            const baseDistStr = breastNoduleGroupParams.distStr;
+                                                                            let newDistStr = baseDistStr;
+                                                                            // 更新距離 state（C=清除，數字鍵=重設，N/M 不改距離）
+                                                                            if (k === 'C') {
+                                                                                newDistStr = '';
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            } else if (['4','5','6','1','2','3'].includes(k)) {
+                                                                                newDistStr = k; // 數字鍵一律視為重新輸入距離（單一位數）
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            }
                                                                             const c = breastNoduleGroupParams.clock;
-                                                                            const dist = k === 'N' ? 'N' : String(parseFloat(newDistStr) || 0);
-                                                                            const text = breastNoduleSentenceTemplate
+                                                                            const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
+                                                                            const dist = k === 'N' ? 'N' : String(numericDist);
+                                                                            const singleText = breastNoduleSentenceTemplate
                                                                                 .replace(/\{W\}/g, String(w))
                                                                                 .replace(/\{H\}/g, String(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
-                                                                            const doCopy = () => { showToast('已複製到剪貼簿'); };
-                                                                            if (navigator.clipboard && navigator.clipboard.writeText) {
-                                                                                navigator.clipboard.writeText(text).then(doCopy).catch(() => {
-                                                                                    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-                                                                                    doCopy();
-                                                                                });
-                                                                            } else {
-                                                                                const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-                                                                                doCopy();
+                                                                            let textToCopy = singleText;
+
+                                                                            // 若按下 M，視為「暫存一顆結節」但先不複製，之後完成下一顆距離時一次複製多顆
+                                                                            if (k === 'M') {
+                                                                                textToCopy = null; // 此時不直接複製
+                                                                                setBreastNodulePendingTexts(prev => [...prev, singleText]);
+                                                                                // M1 之後：重設尺寸長寬與鐘面為 0/未選取，並讓「長」自動反白，方便輸入下一顆結節的尺寸
+                                                                                setBreastNoduleGroupParams(p => ({
+                                                                                    ...p,
+                                                                                    sizeWStr: '0',
+                                                                                    sizeHStr: '0',
+                                                                                    clock: null,
+                                                                                    activeField: 'sizeW',
+                                                                                    reEnterPending: true
+                                                                                }));
+                                                                            } else if (breastNodulePendingTexts.length > 0 && k !== 'C') {
+                                                                                // 已經有暫存的結節，且這次是完成另一顆（距離鍵或 N），一次複製所有，
+                                                                                // 並把最新這一顆也加入暫存，方便之後再繼續新增結節時一併帶出
+                                                                                const allTexts = [...breastNodulePendingTexts, singleText];
+                                                                                textToCopy = allTexts.join('\n');
+                                                                                setBreastNodulePendingTexts(allTexts);
+                                                                            }
+                                                                            if (textToCopy) {
+                                                                                // 統一格式：每一行都加上「三個空格 + - + 空格」
+                                                                                const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
+                                                                                const finalText = lines
+                                                                                    .map(line => {
+                                                                                        // 先去掉原本可能就有的項目符號（避免出現「-    -」）
+                                                                                        const core = line.replace(/^\s*-\s*/, '');
+                                                                                        return `   - ${core}`;
+                                                                                    })
+                                                                                    .join('\n');
+                                                                                // 只複製到剪貼簿，不顯示「已複製到剪貼簿」提示
+                                                                                if (navigator.clipboard && navigator.clipboard.writeText) {
+                                                                                    navigator.clipboard.writeText(finalText).catch(() => {
+                                                                                        const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                                                                                    });
+                                                                                } else {
+                                                                                    const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                                                                                }
                                                                             }
                                                                         }}
                                                                     >
                                                                         {k}
                                                                     </button>
                                                                 ))}
-                                                                <button
-                                                                    type="button"
-                                                                    className={`col-span-2 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${lastDistKeyPressed === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'}`}
-                                                                    onClick={() => {
-                                                                        setLastDistKeyPressed(null);
-                                                                        setBreastNoduleGroupParams(p => ({ ...p, distStr: '0', clock: null }));
-                                                                    }}
-                                                                >
-                                                                    C
-                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2167,7 +1985,7 @@ export function App() {
                                         ) : (
                                         <div className="grid grid-cols-2 gap-3">
                                             {group.items.map((t, idx) => (
-                                                <TemplateButton key={t.id} template={t} side="left" groupId={group.id} index={idx} showEditButtons={editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left'} />
+                                                <TemplateButton key={t.id} template={t} side="left" groupId={group.id} index={idx} showEditButtons={editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left'} ctx={templateButtonCtx} />
                                             ))}
                                             {group.items.length === 0 && (
                                                 <div
@@ -2385,7 +2203,7 @@ export function App() {
                                         ) : (
                                         <div className="grid grid-cols-2 gap-3">
                                             {group.items.map((t, idx) => (
-                                                <TemplateButton key={t.id} template={t} side="right" groupId={group.id} index={idx} showEditButtons={editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right'} />
+                                                <TemplateButton key={t.id} template={t} side="right" groupId={group.id} index={idx} showEditButtons={editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right'} ctx={templateButtonCtx} />
                                             ))}
                                             {group.items.length === 0 && (
                                                 <div
