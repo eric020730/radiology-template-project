@@ -47,6 +47,8 @@ export function App() {
     const [editingTabName, setEditingTabName] = useState(false); // 是否正在修改頁籤名稱
     const [showSettings, setShowSettings] = useState(false);
     const [breastNoduleGroupParams, setBreastNoduleGroupParams] = useState({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
+    const [breastNoduleSentenceTemplate, setBreastNoduleSentenceTemplate] = useState("A {W}x{H}cm small hypoechoic nodule at {C}'{D} from nipple.");
+    const [editingSentenceTemplate, setEditingSentenceTemplate] = useState(false);
     const [lastDistKeyPressed, setLastDistKeyPressed] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
@@ -1920,9 +1922,9 @@ export function App() {
                                                         ⋮⋮
                                                     </span>
                                                 )}
-                                                {(editingGroupName?.groupId === group.id && editingGroupName?.side === 'left') || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') ? (
+                                                {(editingGroupName?.groupId === group.id && editingGroupName?.side === 'left' && editingGroupName?.editing) || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') ? (
                                                     <input
-                                                        autoFocus={editingGroupName?.groupId === group.id && editingGroupName?.side === 'left'}
+                                                        autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
                                                             (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule'
                                                                 ? ''
@@ -1945,7 +1947,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'left' }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
+                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'left', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -1955,7 +1957,12 @@ export function App() {
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {group.type === 'breastNodule' ? (
-                                                    editingGroupsLeft ? <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button> : null
+                                                    <>
+                                                        {editingGroupName?.groupId === group.id && editingGroupName?.side === 'left' && (
+                                                            <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                        )}
+                                                        {editingGroupsLeft && <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
+                                                    </>
                                                 ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
                                                     <>
                                                         <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
@@ -2029,9 +2036,12 @@ export function App() {
                                                                             const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
                                                                             const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
                                                                             const c = breastNoduleGroupParams.clock;
-                                                                            const text = k === 'N'
-                                                                                ? `A ${w}x${h}cm small hypoechoic nodule at ${c}'/N cm from nipple.`
-                                                                                : `A ${w}x${h}cm small hypoechoic nodule at ${c}'/${parseFloat(newDistStr) || 0} cm from nipple.`;
+                                                                            const dist = k === 'N' ? 'N' : String(parseFloat(newDistStr) || 0);
+                                                                            const text = breastNoduleSentenceTemplate
+                                                                                .replace(/\{W\}/g, String(w))
+                                                                                .replace(/\{H\}/g, String(h))
+                                                                                .replace(/\{C\}/g, String(c))
+                                                                                .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             const doCopy = () => { showToast('已複製到剪貼簿'); };
                                                                             if (navigator.clipboard && navigator.clipboard.writeText) {
                                                                                 navigator.clipboard.writeText(text).then(doCopy).catch(() => {
@@ -2168,9 +2178,9 @@ export function App() {
                                                         ⋮⋮
                                                     </span>
                                                 )}
-                                                {(editingGroupName?.groupId === group.id && editingGroupName?.side === 'right') || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') ? (
+                                                {(editingGroupName?.groupId === group.id && editingGroupName?.side === 'right' && editingGroupName?.editing) || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') ? (
                                                     <input
-                                                        autoFocus={editingGroupName?.groupId === group.id && editingGroupName?.side === 'right'}
+                                                        autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
                                                             (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule'
                                                                 ? ''
@@ -2193,7 +2203,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'right' }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
+                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'right', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2203,7 +2213,12 @@ export function App() {
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {group.type === 'breastNodule' ? (
-                                                    editingGroupsRight ? <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button> : null
+                                                    <>
+                                                        {editingGroupName?.groupId === group.id && editingGroupName?.side === 'right' && (
+                                                            <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                        )}
+                                                        {editingGroupsRight && <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
+                                                    </>
                                                 ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
                                                     <>
                                                         <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
@@ -2381,6 +2396,36 @@ export function App() {
                                 >
                                     取消
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editingSentenceTemplate && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-800">編輯句子模板</h3>
+                            <button onClick={() => setEditingSentenceTemplate(false)} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">可用變數</label>
+                                <p className="text-sm text-slate-500 mb-2">{'{W}'} = 長、{'{H}'} = 寬、{'{C}'} = 鐘點、{'{D}'} = 距離</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">句子模板</label>
+                                <textarea
+                                    value={breastNoduleSentenceTemplate}
+                                    onInput={(e) => setBreastNoduleSentenceTemplate(e.target.value)}
+                                    rows="4"
+                                    className="w-full px-4 py-3 border rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm leading-relaxed"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={() => setEditingSentenceTemplate(false)} className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md shadow-blue-100">儲存</button>
+                                <button onClick={() => setEditingSentenceTemplate(false)} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200">取消</button>
                             </div>
                         </div>
                     </div>
