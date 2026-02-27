@@ -1127,9 +1127,10 @@ export function App() {
             right: []
         };
         const newTabs = [...tabs, newTab];
+        const nextIdx = newTabs.length - 1;
         setTabs(newTabs);
-        setActiveTabIdx(newTabs.length - 1);
-        saveToLocal(newTabs);
+        setActiveTabIdx(nextIdx);
+        saveToLocal(newTabs, config, nextIdx);
     };
 
     const deleteCurrentTab = () => {
@@ -1140,9 +1141,10 @@ export function App() {
         if (!confirm(`確定要刪除「${activeTab.name}」頁籤嗎？這會刪除裡面的所有內容。`)) return;
         
         const newTabs = tabs.filter((_, idx) => idx !== activeTabIdx);
+        const nextIdx = 0;
         setTabs(newTabs);
-        setActiveTabIdx(0);
-        saveToLocal(newTabs);
+        setActiveTabIdx(nextIdx);
+        saveToLocal(newTabs, config, nextIdx);
     };
 
     const renameCurrentTab = (newName) => {
@@ -1171,7 +1173,7 @@ export function App() {
         
         setTabs(newTabs);
         setActiveTabIdx(newActiveIdx);
-        saveToLocal(newTabs);
+        saveToLocal(newTabs, config, newActiveIdx);
     };
 
     const connectGoogleSheets = async () => {
@@ -1748,6 +1750,7 @@ export function App() {
                                             onClick={() => {
                                                 if (!editingTabName) {
                                                     setActiveTabIdx(idx);
+                                                    saveToLocal(tabs, config, idx);
                                                 }
                                             }}
                                             className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all w-full h-full ${
