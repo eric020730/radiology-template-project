@@ -277,6 +277,7 @@ export function App() {
 
             setSyncStatus('下載內容中...');
             const newTabs = [];
+            let breastNoduleTemplateFromSheets = null;
 
             // 2. 遍歷每一個 Sheet，讀取 A:F 欄位（分組版：左 A,B,C / 右 D,E,F）
             for (const sheet of metaData.sheets) {
@@ -297,23 +298,39 @@ export function App() {
                     // 左側：A=分組名, B=名稱, C=內容
                     if (row[0] != null && String(row[0]).trim() !== '' && row[1] != null) {
                         const gName = String(row[0]).trim();
+                        const templateName = String(row[1]).trim();
+                        const content = row[2] != null ? String(row[2]) : '';
+                        if (gName === '乳房結節描述' && content) {
+                            const isSentenceTemplateRow = templateName === '句子模板';
+                            if (isSentenceTemplateRow || breastNoduleTemplateFromSheets == null) {
+                                breastNoduleTemplateFromSheets = content;
+                            }
+                        }
                         if (!leftByGroup[gName]) leftByGroup[gName] = [];
                         leftByGroup[gName].push({
                             id: `L-${title}-${idx}-${ts}`,
-                            name: String(row[1]).trim(),
+                            name: templateName,
                             // 保留內容的原始格式（包括前導和尾隨空格），只處理 null/undefined
-                            content: row[2] != null ? String(row[2]) : ''
+                            content
                         });
                     }
                     // 右側：D=分組名, E=名稱, F=內容
                     if (row[3] != null && String(row[3]).trim() !== '' && row[4] != null) {
                         const gName = String(row[3]).trim();
+                        const templateName = String(row[4]).trim();
+                        const content = row[5] != null ? String(row[5]) : '';
+                        if (gName === '乳房結節描述' && content) {
+                            const isSentenceTemplateRow = templateName === '句子模板';
+                            if (isSentenceTemplateRow || breastNoduleTemplateFromSheets == null) {
+                                breastNoduleTemplateFromSheets = content;
+                            }
+                        }
                         if (!rightByGroup[gName]) rightByGroup[gName] = [];
                         rightByGroup[gName].push({
                             id: `R-${title}-${idx}-${ts}`,
-                            name: String(row[4]).trim(),
+                            name: templateName,
                             // 保留內容的原始格式（包括前導和尾隨空格），只處理 null/undefined
-                            content: row[5] != null ? String(row[5]) : ''
+                            content
                         });
                     }
                 });
@@ -336,6 +353,9 @@ export function App() {
             }
 
             setTabs(newTabs);
+            if (breastNoduleTemplateFromSheets != null) {
+                setBreastNoduleSentenceTemplate(breastNoduleTemplateFromSheets);
+            }
             setActiveTabIdx(0);
             saveToLocal(newTabs); // 更新本地
             setSyncStatus('匯入成功！');
@@ -358,11 +378,46 @@ export function App() {
         try {
             setSyncStatus('匯出中...');
             // 傳送整個 tabs 結構給 Apps Script
+            // 若為乳房結節分組，將目前句子模板寫入一個名為「句子模板」的 item，
+            // 對應到 Google Sheet 的「左側組套內容 / 右側組套內容」欄位，讓你在表單中也能編輯
+            const tabsForExport = tabs.map(tab => ({
+                ...tab,
+                left: (tab.left || []).map(group => {
+                    if (group.type !== 'breastNodule') return group;
+                    const baseItems = group.items || [];
+                    // 移除舊的「句子模板」item，避免重複
+                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板');
+                    const items = [
+                        ...withoutTemplate,
+                        {
+                            id: `${group.id}-template`,
+                            name: '句子模板',
+                            content: breastNoduleSentenceTemplate
+                        }
+                    ];
+                    return { ...group, items };
+                }),
+                right: (tab.right || []).map(group => {
+                    if (group.type !== 'breastNodule') return group;
+                    const baseItems = group.items || [];
+                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板');
+                    const items = [
+                        ...withoutTemplate,
+                        {
+                            id: `${group.id}-template`,
+                            name: '句子模板',
+                            content: breastNoduleSentenceTemplate
+                        }
+                    ];
+                    return { ...group, items };
+                })
+            }));
+
             await fetch(config.scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tabs: tabs }) 
+                body: JSON.stringify({ tabs: tabsForExport }) 
             });
 
             setSyncStatus('匯出成功！');
@@ -1987,7 +2042,7 @@ export function App() {
                                                     <div className="flex items-center justify-center gap-1 mb-2">
                                                         <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
                                                         <span className="text-slate-400">×</span>
-                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, sizeHStr: '0', activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
                                                     </div>
                                                     <div className="relative flex justify-center items-center mx-auto shrink-0 mt-5 w-full" style={{ maxWidth: '140px', aspectRatio: '80/48' }}>
                                                         <svg viewBox="0 0 80 48" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
@@ -2243,7 +2298,7 @@ export function App() {
                                                     <div className="flex items-center justify-center gap-1 mb-2">
                                                         <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
                                                         <span className="text-slate-400">×</span>
-                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, sizeHStr: '0', activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
                                                     </div>
                                                     <div className="relative flex justify-center items-center mx-auto shrink-0 w-full" style={{ maxWidth: '140px', aspectRatio: '80/48' }}>
                                                         <svg viewBox="0 0 80 48" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
