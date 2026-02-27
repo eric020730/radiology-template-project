@@ -292,19 +292,53 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
     );
 }
 
-export function App() {
-    // 預設資料結構：完全空白，單一頁籤、無分組無組套
-    const defaultTabs = [
-        {
-            id: 'tab-default',
-            name: '新頁籤',
-            left: [],
-            right: []
-        }
-    ];
+// 確保名為「乳房結節描述」的分組有 breastNodule 類型
+function ensureBreastNoduleTypes(tabsData) {
+    if (!Array.isArray(tabsData)) return tabsData;
+    return tabsData.map(tab => ({
+        ...tab,
+        left: (tab.left || []).map(g =>
+            g.name === '乳房結節描述' ? { ...g, type: g.type || 'breastNodule' } : g
+        ),
+        right: (tab.right || []).map(g =>
+            g.name === '乳房結節描述' ? { ...g, type: g.type || 'breastNodule' } : g
+        )
+    }));
+}
 
-    const [tabs, setTabs] = useState(defaultTabs);
-    const [activeTabIdx, setActiveTabIdx] = useState(0); // 目前顯示第幾個頁籤
+// 從 localStorage 讀取初始狀態，避免 useEffect 造成的閃爍
+function loadInitialState() {
+    const defaultTabs = [{ id: 'tab-default', name: '新頁籤', left: [], right: [] }];
+    const defaultConfig = { spreadsheetId: '', apiKey: '', scriptUrl: '', isConnected: false };
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+            || localStorage.getItem('radiologyTemplatesConfig_v2');
+        if (saved) {
+            const data = JSON.parse(saved);
+            let tabs = defaultTabs;
+            let activeTabIdx = 0;
+            let config = defaultConfig;
+            if (data.tabs && Array.isArray(data.tabs)) {
+                const baseTabs = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
+                tabs = ensureBreastNoduleTypes(baseTabs);
+                if (typeof data.activeTabIdx === 'number' && data.activeTabIdx >= 0 && data.activeTabIdx < tabs.length) {
+                    activeTabIdx = data.activeTabIdx;
+                }
+            }
+            if (data.config) config = data.config;
+            return { tabs, activeTabIdx, config };
+        }
+    } catch (e) {
+        console.error("localStorage 存取失敗", e);
+    }
+    return { tabs: defaultTabs, activeTabIdx: 0, config: defaultConfig };
+}
+
+export function App() {
+    const initialState = loadInitialState();
+
+    const [tabs, setTabs] = useState(initialState.tabs);
+    const [activeTabIdx, setActiveTabIdx] = useState(initialState.activeTabIdx);
     
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [deleteConfirmTemplate, setDeleteConfirmTemplate] = useState(null); // 待確認刪除的組套
@@ -342,12 +376,7 @@ export function App() {
     const tabEditAreaRef = useRef(null);          // 當前頁籤標題與操作區域 ref
     const tabScrollRef = useRef(null);            // 頁籤欄左右滑動容器 ref
     
-    const [config, setConfig] = useState({
-        spreadsheetId: '',
-        apiKey: '',
-        scriptUrl: '',
-        isConnected: false
-    });
+    const [config, setConfig] = useState(initialState.config);
     const [toast, setToast] = useState(null); // { message, type: 'success'|'error' }，3 秒後自動消失
     const toastTimerRef = useRef(null);
     const showToast = (message, type = 'success') => {
@@ -360,47 +389,6 @@ export function App() {
     const activeTab = tabs[activeTabIdx] || tabs[0];
 
     // 將名稱為「乳房結節描述」的分組補上 type，避免因匯入或外部腳本改動而失去特殊 UI
-    const ensureBreastNoduleTypes = (tabsData) => {
-        if (!Array.isArray(tabsData)) return tabsData;
-        return tabsData.map(tab => ({
-            ...tab,
-            left: (tab.left || []).map(g =>
-                g.name === '乳房結節描述'
-                    ? { ...g, type: g.type || 'breastNodule' }
-                    : g
-            ),
-            right: (tab.right || []).map(g =>
-                g.name === '乳房結節描述'
-                    ? { ...g, type: g.type || 'breastNodule' }
-                    : g
-            )
-        }));
-    };
-
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY)
-                || localStorage.getItem('radiologyTemplatesConfig_v2'); // 相容 v2
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    if (data.tabs && Array.isArray(data.tabs)) {
-                        const baseTabs = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
-                        const tabsData = ensureBreastNoduleTypes(baseTabs);
-                        setTabs(tabsData);
-                        if (typeof data.activeTabIdx === 'number' && data.activeTabIdx >= 0 && data.activeTabIdx < tabsData.length) {
-                            setActiveTabIdx(data.activeTabIdx);
-                        }
-                    }
-                    if (data.config) setConfig(data.config);
-                } catch (e) {
-                    console.error("讀取舊存檔失敗", e);
-                }
-            }
-        } catch (e) {
-            console.error("localStorage 存取失敗", e);
-        }
-    }, []);
 
     // 點擊外部區域關閉編輯分組模式
     useEffect(() => {
@@ -654,8 +642,9 @@ export function App() {
             if (breastNoduleTemplateFromSheets != null) {
                 setBreastNoduleSentenceTemplate(breastNoduleTemplateFromSheets);
             }
-            setActiveTabIdx(0);
-            saveToLocal(newTabs, config, 0); // 更新本地，記錄目前頁籤為 0
+            const keepIdx = activeTabIdx < newTabs.length ? activeTabIdx : 0;
+            setActiveTabIdx(keepIdx);
+            saveToLocal(newTabs, config, keepIdx);
             setSyncStatus('匯入成功！');
             showToast(`已匯入 ${newTabs.length} 個頁籤`);
             setTimeout(() => setSyncStatus('已連接'), 2000);
