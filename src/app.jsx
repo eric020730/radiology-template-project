@@ -975,19 +975,26 @@ export function App() {
                 return { ...p, sizeHStr: key, activeField: 'sizeH', reEnterPending: false };
             }
             if (activeField === 'sizeH') {
-                if (p.reEnterPending && key !== '.') {
-                    return { ...p, sizeHStr: key, reEnterPending: false };
-                }
+                // 與「長」相同概念：只要目前停留在「寬」，按數字就視為重新輸入，
+                // 但仍保留一位小數的邏輯
                 if (key === '.') {
-                    if (sizeHStr && !sizeHStr.includes('.') && sizeHStr !== '0') return { ...p, sizeHStr: sizeHStr + '.', reEnterPending: false };
+                    // 只有在目前已經有整數、沒有小數點、且不是 0 時才允許加小數點
+                    if (sizeHStr && !sizeHStr.includes('.') && sizeHStr !== '0') {
+                        return { ...p, sizeHStr: sizeHStr + '.', reEnterPending: false };
+                    }
                     return p;
                 }
-                if (!sizeHStr || sizeHStr === '0') return { ...p, sizeHStr: key, reEnterPending: false };
+                // 數字鍵：若目前是空字串/0，或剛從方框點選進來（reEnterPending），一律視為重新輸入
+                if (p.reEnterPending || !sizeHStr || sizeHStr === '0') {
+                    return { ...p, sizeHStr: key, reEnterPending: false };
+                }
+                // 若已有小數點，且小數位數 < 1，則補上一位小數
                 if (sizeHStr.includes('.')) {
                     if ((sizeHStr.split('.')[1] || '').length >= 1) return p;
                     return { ...p, sizeHStr: sizeHStr + key, reEnterPending: false };
                 }
-                return p;
+                // 其他情況（例如非 0 的整數，沒有小數點），一律視為重新輸入
+                return { ...p, sizeHStr: key, reEnterPending: false };
             }
             const next = distStr + key;
             return { ...p, distStr: next };
@@ -2042,7 +2049,7 @@ export function App() {
                                                     <div className="flex items-center justify-center gap-1 mb-2">
                                                         <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
                                                         <span className="text-slate-400">×</span>
-                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, sizeHStr: '0', activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
                                                     </div>
                                                     <div className="relative flex justify-center items-center mx-auto shrink-0 mt-5 w-full" style={{ maxWidth: '140px', aspectRatio: '80/48' }}>
                                                         <svg viewBox="0 0 80 48" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
@@ -2298,7 +2305,7 @@ export function App() {
                                                     <div className="flex items-center justify-center gap-1 mb-2">
                                                         <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeW', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeWStr, '長')}</button>
                                                         <span className="text-slate-400">×</span>
-                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, sizeHStr: '0', activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
+                                                        <button type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, activeField: 'sizeH', reEnterPending: true }))} className={`px-2 py-1 rounded text-sm font-mono min-w-[3rem] ${breastNoduleGroupParams.activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(breastNoduleGroupParams.sizeHStr, '寬')}</button>
                                                     </div>
                                                     <div className="relative flex justify-center items-center mx-auto shrink-0 w-full" style={{ maxWidth: '140px', aspectRatio: '80/48' }}>
                                                         <svg viewBox="0 0 80 48" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
