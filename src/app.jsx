@@ -322,7 +322,9 @@ export function App() {
                     Object.entries(byGroup).map(([name, items], i) => ({
                         id: `${prefix}-${title}-${i}-${ts}`,
                         name,
-                        items
+                        items,
+                        // 任何頁籤中，只要分組名稱是「乳房結節描述」，就視為乳房結節組套
+                        ...(name === '乳房結節描述' ? { type: 'breastNodule' } : {})
                     }));
 
                 newTabs.push({
