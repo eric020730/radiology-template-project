@@ -64,7 +64,7 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
     const isDragging = dragState?.template?.id === template.id;
     const isDropTarget = dropTarget?.side === side && dropTarget?.groupId === groupId && dropTarget?.index === index;
     const buttonClass = copiedId === template.id
-        ? 'bg-emerald-500 text-white shadow-inner scale-[0.98] copied-animation'
+        ? 'bg-blue-500 text-white shadow-inner scale-[0.98] copied-animation'
         : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 shadow-sm hover:shadow-md';
 
     const { hasLeft, hasRight, hasRightSlashBilateral } = hasLeftRight(template.content);
@@ -1874,7 +1874,15 @@ export function App() {
                                                                 const y = 100 + r * Math.sin(angleRad);
                                                                 const isSelected = breastNoduleGroupParams.clock === h;
                                                                 return (
-                                                                    <g key={h} onClick={() => setBreastNoduleGroupParams(p => ({ ...p, clock: h }))} style={{ cursor: 'pointer' }} transform={`translate(${x},${y})`}>
+                                                                    <g
+                                                                        key={h}
+                                                                        onClick={() => {
+                                                                            setBreastNoduleGroupParams(p => ({ ...p, clock: h }));
+                                                                            setLastDistKeyPressed(null);
+                                                                        }}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        transform={`translate(${x},${y})`}
+                                                                    >
                                                                         <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? '#3b82f6' : '#e2e8f0'} stroke={isSelected ? '#2563eb' : '#cbd5e1'} strokeWidth={2} />
                                                                         <foreignObject x={-13} y={-13} width={26} height={26}>
                                                                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{h}</div>
@@ -1896,10 +1904,8 @@ export function App() {
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                : (lastDistKeyPressed === k
-                                                                                    ? (breastNoduleGroupParams.clock == null
-                                                                                        ? 'bg-red-500 border-red-600 text-white'
-                                                                                        : 'bg-blue-500 border-blue-600 text-white')
+                                                                                : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
+                                                                                    ? 'bg-blue-500 border-blue-600 text-white'
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
