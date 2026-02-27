@@ -505,6 +505,7 @@ export function App() {
                 return { sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null };
             });
             setLastDistKeyPressed(prev => prev === null ? prev : null);
+            setBreastNodulePendingTexts(prev => prev.length === 0 ? prev : []);
         };
         document.addEventListener('mousedown', handleClickOutsideBreastNodule);
         return () => document.removeEventListener('mousedown', handleClickOutsideBreastNodule);
@@ -1209,6 +1210,7 @@ export function App() {
     };
 
     const applyBreastNoduleKeypad = (key) => {
+        if (key === 'C') setBreastNodulePendingTexts([]);
         setBreastNoduleGroupParams((p) => {
             const { activeField, sizeWStr, sizeHStr, distStr } = p;
             if (key === 'C') {
@@ -1899,14 +1901,27 @@ export function App() {
                                                                         key={`dist-${k}`}
                                                                         type="button"
                                                                         className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
-                                                                            lastDistKeyPressed === k
-                                                                                ? (breastNoduleGroupParams.clock == null
-                                                                                    ? 'bg-red-500 border-red-600 text-white'
-                                                                                    : 'bg-blue-500 border-blue-600 text-white')
-                                                                                : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'
+                                                                            k === 'M'
+                                                                                ? (lastDistKeyPressed === 'M'
+                                                                                    ? (breastNodulePendingTexts.length > 0
+                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                        : 'bg-red-500 border-red-600 text-white')
+                                                                                    : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                : (lastDistKeyPressed === k
+                                                                                    ? (breastNoduleGroupParams.clock == null
+                                                                                        ? 'bg-red-500 border-red-600 text-white'
+                                                                                        : 'bg-blue-500 border-blue-600 text-white')
+                                                                                    : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
                                                                             setLastDistKeyPressed(k);
+                                                                            // C 鍵：全部歸零（含左側長寬），不產生句子也不複製
+                                                                            if (k === 'C') {
+                                                                                setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
+                                                                                setBreastNodulePendingTexts([]);
+                                                                                setLastDistKeyPressed(null);
+                                                                                return;
+                                                                            }
                                                                             // 若尚未選擇鐘點，只將按下的鍵標成紅色提醒，不做任何距離或複製動作
                                                                             if (breastNoduleGroupParams.clock == null) { return; }
                                                                             // 若長或寬為 0，視為尚未輸入完整尺寸，不產生句子也不更新距離
@@ -1916,10 +1931,7 @@ export function App() {
                                                                             const baseDistStr = breastNoduleGroupParams.distStr;
                                                                             let newDistStr = baseDistStr;
                                                                             // 更新距離 state（C=清除，數字鍵=重設，N/M 不改距離）
-                                                                            if (k === 'C') {
-                                                                                newDistStr = '';
-                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
-                                                                            } else if (['4','5','6','1','2','3'].includes(k)) {
+                                                                            if (['4','5','6','1','2','3'].includes(k)) {
                                                                                 newDistStr = k; // 數字鍵一律視為重新輸入距離（單一位數）
                                                                                 setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
                                                                             }
@@ -1937,6 +1949,7 @@ export function App() {
                                                                             if (k === 'M') {
                                                                                 textToCopy = null; // 此時不直接複製
                                                                                 setBreastNodulePendingTexts(prev => [...prev, singleText]);
+                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 // M1 之後：重設尺寸長寬與鐘面為 0/未選取，並讓「長」自動反白，方便輸入下一顆結節的尺寸
                                                                                 setBreastNoduleGroupParams(p => ({
                                                                                     ...p,
@@ -2195,7 +2208,7 @@ export function App() {
                                                     </div>
                                                     <div className="grid grid-cols-5 gap-1 w-[160px] mx-auto">
                                                         {['1','2','3','4','5','6','7','8','9','0','C'].map((k) => (
-                                                            <button key={k} type="button" onClick={() => setBreastNoduleGroupParams(p => ({ ...p, distStr: k === 'C' ? '' : p.distStr + k }))} className="w-7 h-7 rounded bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                            <button key={k} type="button" onClick={() => { if (k === 'C') setBreastNodulePendingTexts([]); setBreastNoduleGroupParams(p => ({ ...p, distStr: k === 'C' ? '' : p.distStr + k })); }} className="w-7 h-7 rounded bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
                                                         ))}
                                                     </div>
                                                 </div>
