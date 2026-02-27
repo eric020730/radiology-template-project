@@ -371,6 +371,7 @@ export function App() {
     const dragOffsetRef = useRef({ x: 0, y: 0 });      // 拖曳起點在按鈕內的偏移
     const moveTemplateRef = useRef(null);
     const swapTemplatesRef = useRef(null);
+    const copiedTimerRef = useRef(null); // 控制組套複製後高亮時間，確保最後一次點擊維持完整 1 秒
     const leftGroupsContainerRef = useRef(null);  // 左側分組容器 ref
     const rightGroupsContainerRef = useRef(null); // 右側分組容器 ref
     const tabEditAreaRef = useRef(null);          // 當前頁籤標題與操作區域 ref
@@ -768,6 +769,17 @@ export function App() {
         return '';
     };
 
+    const markCopied = (id) => {
+        if (copiedTimerRef.current) {
+            clearTimeout(copiedTimerRef.current);
+        }
+        setCopiedId(id);
+        copiedTimerRef.current = setTimeout(() => {
+            setCopiedId(null);
+            copiedTimerRef.current = null;
+        }, 1000);
+    };
+
     // 複製 enlarged 模式的不同選項（小/中/大）
     const copyEnlarged = async (template, size) => {
         let textToCopy = template.content;
@@ -793,8 +805,7 @@ export function App() {
         
         try {
             await navigator.clipboard.writeText(textToCopy);
-            setCopiedId(`${template.id}-enlarged-${size}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-enlarged-${size}`);
         } catch (err) {
             // Fallback for older browsers
             const ta = document.createElement('textarea');
@@ -803,8 +814,7 @@ export function App() {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            setCopiedId(`${template.id}-enlarged-${size}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-enlarged-${size}`);
         }
     };
 
@@ -845,8 +855,7 @@ export function App() {
         
         try {
             await navigator.clipboard.writeText(textToCopy);
-            setCopiedId(`${template.id}-lobe-${lobe}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-lobe-${lobe}`);
         } catch (err) {
             // Fallback for older browsers
             const ta = document.createElement('textarea');
@@ -855,8 +864,7 @@ export function App() {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            setCopiedId(`${template.id}-lobe-${lobe}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-lobe-${lobe}`);
         }
     };
 
@@ -885,8 +893,7 @@ export function App() {
         
         try {
             await navigator.clipboard.writeText(textToCopy);
-            setCopiedId(`${template.id}-severity-${severity}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-severity-${severity}`);
         } catch (err) {
             // Fallback for older browsers
             const ta = document.createElement('textarea');
@@ -895,8 +902,7 @@ export function App() {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            setCopiedId(`${template.id}-severity-${severity}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-severity-${severity}`);
         }
     };
 
@@ -986,8 +992,7 @@ export function App() {
         
         try {
             await navigator.clipboard.writeText(textToCopy);
-            setCopiedId(`${template.id}-${side}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-${side}`);
         } catch (err) {
             // Fallback for older browsers
             const ta = document.createElement('textarea');
@@ -996,8 +1001,7 @@ export function App() {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            setCopiedId(`${template.id}-${side}`);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(`${template.id}-${side}`);
         }
     };
 
@@ -1005,8 +1009,7 @@ export function App() {
         const text = template.content;
         try {
             await navigator.clipboard.writeText(text);
-            setCopiedId(template.id);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(template.id);
         } catch (err) {
             // Fallback for older browsers
             const ta = document.createElement('textarea');
@@ -1015,8 +1018,7 @@ export function App() {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            setCopiedId(template.id);
-            setTimeout(() => setCopiedId(null), 1000);
+            markCopied(template.id);
         }
     };
 
