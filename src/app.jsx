@@ -59,10 +59,10 @@ function EraserIcon({ size = 12, className = '' }) {
     );
 }
 
-// M 鍵圖示（加號 M1，加入暫存）
+// M 鍵圖示（加號 A1 圓角粗線＋，加入暫存）
 function ListIcon({ size = 12, className = '' }) {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className} aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" className={className} aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
         </svg>
     );
