@@ -306,6 +306,19 @@ function ensureBreastNoduleTypes(tabsData) {
     }));
 }
 
+function ensureThyroidNoduleTypes(tabsData) {
+    if (!Array.isArray(tabsData)) return tabsData;
+    return tabsData.map(tab => ({
+        ...tab,
+        left: (tab.left || []).map(g =>
+            g.name === '甲狀腺結節描述' ? { ...g, type: g.type || 'thyroidNodule' } : g
+        ),
+        right: (tab.right || []).map(g =>
+            g.name === '甲狀腺結節描述' ? { ...g, type: g.type || 'thyroidNodule' } : g
+        )
+    }));
+}
+
 // 從 localStorage 讀取初始狀態，避免 useEffect 造成的閃爍
 function loadInitialState() {
     const defaultTabs = [{ id: 'tab-default', name: '新頁籤', left: [], right: [] }];
@@ -320,7 +333,7 @@ function loadInitialState() {
             let config = defaultConfig;
             if (data.tabs && Array.isArray(data.tabs)) {
                 const baseTabs = isLegacyV2Tabs(data.tabs) ? migrateV2ToV3(data.tabs) : data.tabs;
-                tabs = ensureBreastNoduleTypes(baseTabs);
+                tabs = ensureThyroidNoduleTypes(ensureBreastNoduleTypes(baseTabs));
                 if (typeof data.activeTabIdx === 'number' && data.activeTabIdx >= 0 && data.activeTabIdx < tabs.length) {
                     activeTabIdx = data.activeTabIdx;
                 }
@@ -355,6 +368,16 @@ export function App() {
     const [breastNodulePendingTexts, setBreastNodulePendingTexts] = useState([]); // 暫存多顆結節的結構資料 { w, h, clock }，搭配 M 鍵使用
     const [editingSentenceTemplate, setEditingSentenceTemplate] = useState(false);
     const [lastDistKeyPressed, setLastDistKeyPressed] = useState(null);
+    const [breastNoduleSizeKeyHighlight, setBreastNoduleSizeKeyHighlight] = useState(null); // 'C' 時顯示尺寸鍵盤 C 反白
+    const [thyroidNoduleParams, setThyroidNoduleParams] = useState({
+        right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false },
+        left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }
+    });
+    const [thyroidNoduleSentenceTemplate, setThyroidNoduleSentenceTemplate] = useState("A {W}x{H}cm hypoechoic nodule at {SIDE} lobe of thyroid gland.");
+    const [thyroidNoduleMergedTemplate, setThyroidNoduleMergedTemplate] = useState("Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.");
+    const [thyroidNodulePendingTexts, setThyroidNodulePendingTexts] = useState({ right: [], left: [] });
+    const [thyroidLastKeyPressed, setThyroidLastKeyPressed] = useState({ right: null, left: null });
+    const [editingThyroidSentenceTemplate, setEditingThyroidSentenceTemplate] = useState(false);
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
     const [dragState, setDragState] = useState(null);   // { template, sourceGroupId, sourceSide, sourceIndex }
@@ -550,6 +573,7 @@ export function App() {
             setSyncStatus('下載內容中...');
             const newTabs = [];
             let breastNoduleTemplateFromSheets = null;
+            let thyroidNoduleTemplateFromSheets = null;
 
             // 2. 遍歷每一個 Sheet，讀取 A:F 欄位（分組版：左 A,B,C / 右 D,E,F）
             for (const sheet of metaData.sheets) {
@@ -578,6 +602,12 @@ export function App() {
                                 breastNoduleTemplateFromSheets = content;
                             }
                         }
+                        if (gName === '甲狀腺結節描述' && content) {
+                            const isThyroidTemplateRow = templateName === '句子模板';
+                            if (isThyroidTemplateRow || thyroidNoduleTemplateFromSheets == null) {
+                                thyroidNoduleTemplateFromSheets = content;
+                            }
+                        }
                         if (!leftByGroup[gName]) leftByGroup[gName] = [];
                         leftByGroup[gName].push({
                             id: `L-${title}-${idx}-${ts}`,
@@ -597,6 +627,12 @@ export function App() {
                                 breastNoduleTemplateFromSheets = content;
                             }
                         }
+                        if (gName === '甲狀腺結節描述' && content) {
+                            const isThyroidTemplateRow = templateName === '句子模板';
+                            if (isThyroidTemplateRow || thyroidNoduleTemplateFromSheets == null) {
+                                thyroidNoduleTemplateFromSheets = content;
+                            }
+                        }
                         if (!rightByGroup[gName]) rightByGroup[gName] = [];
                         rightByGroup[gName].push({
                             id: `R-${title}-${idx}-${ts}`,
@@ -612,8 +648,7 @@ export function App() {
                         id: `${prefix}-${title}-${i}-${ts}`,
                         name,
                         items,
-                        // 任何頁籤中，只要分組名稱是「乳房結節描述」，就視為乳房結節組套
-                        ...(name === '乳房結節描述' ? { type: 'breastNodule' } : {})
+                        ...(name === '乳房結節描述' ? { type: 'breastNodule' } : name === '甲狀腺結節描述' ? { type: 'thyroidNodule' } : {})
                     }));
 
                 newTabs.push({
@@ -627,6 +662,9 @@ export function App() {
             setTabs(newTabs);
             if (breastNoduleTemplateFromSheets != null) {
                 setBreastNoduleSentenceTemplate(breastNoduleTemplateFromSheets);
+            }
+            if (thyroidNoduleTemplateFromSheets != null) {
+                setThyroidNoduleSentenceTemplate(thyroidNoduleTemplateFromSheets);
             }
             const keepIdx = activeTabIdx < newTabs.length ? activeTabIdx : 0;
             setActiveTabIdx(keepIdx);
@@ -656,42 +694,30 @@ export function App() {
             const tabsForExport = tabs.map(tab => ({
                 ...tab,
                 left: (tab.left || []).map(group => {
-                    if (group.type !== 'breastNodule') return group;
-                    const baseItems = group.items || [];
-                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
-                    const items = [
-                        ...withoutTemplate,
-                        {
-                            id: `${group.id}-template`,
-                            name: '句子模板',
-                            content: breastNoduleSentenceTemplate
-                        },
-                        {
-                            id: `${group.id}-merged-template`,
-                            name: '合併模板',
-                            content: breastNoduleMergedTemplate
-                        }
-                    ];
-                    return { ...group, items };
+                    if (group.type === 'breastNodule') {
+                        const baseItems = group.items || [];
+                        const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
+                        return { ...group, items: [...withoutTemplate, { id: `${group.id}-template`, name: '句子模板', content: breastNoduleSentenceTemplate }, { id: `${group.id}-merged-template`, name: '合併模板', content: breastNoduleMergedTemplate }] };
+                    }
+                    if (group.type === 'thyroidNodule') {
+                        const baseItems = group.items || [];
+                        const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
+                        return { ...group, items: [...withoutTemplate, { id: `${group.id}-template`, name: '句子模板', content: thyroidNoduleSentenceTemplate }, { id: `${group.id}-merged-template`, name: '合併模板', content: thyroidNoduleMergedTemplate }] };
+                    }
+                    return group;
                 }),
                 right: (tab.right || []).map(group => {
-                    if (group.type !== 'breastNodule') return group;
-                    const baseItems = group.items || [];
-                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
-                    const items = [
-                        ...withoutTemplate,
-                        {
-                            id: `${group.id}-template`,
-                            name: '句子模板',
-                            content: breastNoduleSentenceTemplate
-                        },
-                        {
-                            id: `${group.id}-merged-template`,
-                            name: '合併模板',
-                            content: breastNoduleMergedTemplate
-                        }
-                    ];
-                    return { ...group, items };
+                    if (group.type === 'breastNodule') {
+                        const baseItems = group.items || [];
+                        const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
+                        return { ...group, items: [...withoutTemplate, { id: `${group.id}-template`, name: '句子模板', content: breastNoduleSentenceTemplate }, { id: `${group.id}-merged-template`, name: '合併模板', content: breastNoduleMergedTemplate }] };
+                    }
+                    if (group.type === 'thyroidNodule') {
+                        const baseItems = group.items || [];
+                        const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
+                        return { ...group, items: [...withoutTemplate, { id: `${group.id}-template`, name: '句子模板', content: thyroidNoduleSentenceTemplate }, { id: `${group.id}-merged-template`, name: '合併模板', content: thyroidNoduleMergedTemplate }] };
+                    }
+                    return group;
                 })
             }));
 
@@ -1233,13 +1259,15 @@ export function App() {
     };
 
     const applyBreastNoduleKeypad = (key) => {
-        if (key === 'C') setBreastNodulePendingTexts([]);
+        if (key === 'C') {
+            setBreastNodulePendingTexts([]);
+            setBreastNoduleSizeKeyHighlight('C');
+            setTimeout(() => setBreastNoduleSizeKeyHighlight(null), 1000);
+            setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
+            return;
+        }
         setBreastNoduleGroupParams((p) => {
             const { activeField, sizeWStr, sizeHStr, distStr } = p;
-            if (key === 'C') {
-                if (activeField === 'sizeW' || activeField === 'sizeH' || activeField === null) return { ...p, sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false };
-                return { ...p, distStr: '' };
-            }
             if (activeField === null) {
                 if (key === '.') return p;
                 return { ...p, sizeWStr: key, activeField: 'sizeW', reEnterPending: false };
@@ -1284,6 +1312,115 @@ export function App() {
             const next = distStr + key;
             return { ...p, distStr: next };
         });
+    };
+
+    const applyThyroidNoduleKeypad = (lobeSide, key) => {
+        if (key === 'C') {
+            setThyroidNodulePendingTexts(prev => ({ ...prev, [lobeSide]: [] }));
+        }
+        setThyroidNoduleParams(prev => {
+            const p = prev[lobeSide];
+            const { activeField, sizeWStr, sizeHStr } = p;
+            let updated;
+            if (key === 'C') {
+                updated = { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false };
+            } else if (activeField === null) {
+                if (key === '.') return prev;
+                updated = { ...p, sizeWStr: key, activeField: 'sizeW', reEnterPending: false };
+            } else if (activeField === 'sizeW') {
+                if (p.reEnterPending && key !== '.') {
+                    updated = { ...p, sizeWStr: key, reEnterPending: false };
+                } else if (key === '.') {
+                    if (sizeWStr && !sizeWStr.includes('.') && sizeWStr !== '0') {
+                        updated = { ...p, sizeWStr: sizeWStr + '.', reEnterPending: false };
+                    } else return prev;
+                } else if (!sizeWStr || sizeWStr === '0') {
+                    updated = { ...p, sizeWStr: key, reEnterPending: false };
+                } else if (sizeWStr.includes('.')) {
+                    if ((sizeWStr.split('.')[1] || '').length >= 1) return prev;
+                    updated = { ...p, sizeWStr: sizeWStr + key, activeField: 'sizeH', reEnterPending: false };
+                } else {
+                    updated = { ...p, sizeHStr: key, activeField: 'sizeH', reEnterPending: false };
+                }
+            } else if (activeField === 'sizeH') {
+                if (key === '.') {
+                    if (sizeHStr && !sizeHStr.includes('.') && sizeHStr !== '0') {
+                        updated = { ...p, sizeHStr: sizeHStr + '.', reEnterPending: false };
+                    } else return prev;
+                } else if (p.reEnterPending || !sizeHStr || sizeHStr === '0') {
+                    updated = { ...p, sizeHStr: key, reEnterPending: false };
+                } else if (sizeHStr.includes('.')) {
+                    if ((sizeHStr.split('.')[1] || '').length >= 1) return prev;
+                    updated = { ...p, sizeHStr: sizeHStr + key, reEnterPending: false };
+                } else {
+                    updated = { ...p, sizeHStr: key, reEnterPending: false };
+                }
+            } else {
+                return prev;
+            }
+            return { ...prev, [lobeSide]: updated || p };
+        });
+    };
+
+    const handleThyroidAction = (lobeSide, key) => {
+        setThyroidLastKeyPressed(prev => ({ ...prev, [lobeSide]: key }));
+        const p = thyroidNoduleParams[lobeSide];
+        const w = parseSizeValue(p.sizeWStr);
+        const h = parseSizeValue(p.sizeHStr);
+        if (w === 0 || h === 0) return;
+
+        if (key === 'M') {
+            const noduleData = { w, h };
+            setThyroidNodulePendingTexts(prev => {
+                const existing = prev[lobeSide] || [];
+                if (existing.length > 0) {
+                    const last = existing[existing.length - 1];
+                    if (last.w === w && last.h === h) return prev;
+                }
+                return { ...prev, [lobeSide]: [...existing, noduleData] };
+            });
+            setThyroidNoduleParams(prev => ({
+                ...prev,
+                [lobeSide]: { sizeWStr: '0', sizeHStr: '0', activeField: 'sizeW', reEnterPending: true }
+            }));
+            setTimeout(() => setThyroidLastKeyPressed(prev => ({ ...prev, [lobeSide]: null })), 1000);
+            return;
+        }
+
+        if (key === 'N') {
+            const pending = thyroidNodulePendingTexts[lobeSide] || [];
+            let textToCopy;
+            if (pending.length > 0) {
+                const allNodules = [...pending, { w, h }];
+                const sizes = allNodules.map(n => `${n.w}x${n.h}cm`).join(', ');
+                textToCopy = thyroidNoduleMergedTemplate
+                    .replace(/\{SIZES\}/g, sizes)
+                    .replace(/\{SIDE\}/g, lobeSide);
+            } else {
+                textToCopy = thyroidNoduleSentenceTemplate
+                    .replace(/\{W\}/g, String(w))
+                    .replace(/\{H\}/g, String(h))
+                    .replace(/\{SIDE\}/g, lobeSide);
+            }
+            const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
+            const finalText = lines.map(line => {
+                const core = line.replace(/^\s*-\s*/, '');
+                return `   - ${core}`;
+            }).join('\n');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(finalText).catch(() => {
+                    const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                });
+            } else {
+                const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            }
+            setThyroidNodulePendingTexts(prev => ({ ...prev, [lobeSide]: [] }));
+            setThyroidNoduleParams(prev => ({
+                ...prev,
+                [lobeSide]: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }
+            }));
+            setTimeout(() => setThyroidLastKeyPressed(prev => ({ ...prev, [lobeSide]: null })), 1000);
+        }
     };
 
     // 刪除分組（含確認）
@@ -1336,8 +1473,10 @@ export function App() {
             const groups = side === 'left' ? [...tab.left] : [...tab.right];
             const next = groups.map(g => {
                 if (g.id !== groupId) return g;
-                const isBreastName = String(newName).trim() === '乳房結節描述';
-                const type = isBreastName ? 'breastNodule' : (g.type === 'breastNodule' ? undefined : g.type);
+                const trimmed = String(newName).trim();
+                const isBreastName = trimmed === '乳房結節描述';
+                const isThyroidName = trimmed === '甲狀腺結節描述';
+                const type = isBreastName ? 'breastNodule' : isThyroidName ? 'thyroidNodule' : ((g.type === 'breastNodule' || g.type === 'thyroidNodule') ? undefined : g.type);
                 return { ...g, name: newName, type };
             });
             return side === 'left' ? { ...tab, left: next } : { ...tab, right: next };
@@ -1781,6 +1920,7 @@ export function App() {
                                         data-group-id={group.id}
                                         data-group-side="left"
                                         {...(group.type === 'breastNodule' && { 'data-breast-nodule-group': 'true' })}
+                                        {...(group.type === 'thyroidNodule' && { 'data-thyroid-nodule-group': 'true' })}
                                         data-group-drop
                                         data-side="left"
                                         data-index={groupIndex}
@@ -1808,7 +1948,7 @@ export function App() {
                                     >
                                             <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || (group.type === 'breastNodule' && editingGroupName?.groupId === group.id && editingGroupName?.side === 'left')) && (
+                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || ((group.type === 'breastNodule' || group.type === 'thyroidNodule') && editingGroupName?.groupId === group.id && editingGroupName?.side === 'left')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -1827,7 +1967,7 @@ export function App() {
                                                     <input
                                                         autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
-                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule'
+                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule' || group.type === 'thyroidNodule'
                                                                 ? '' 
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
@@ -1848,7 +1988,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'left', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
+                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule') ? setEditingGroupName({ groupId: group.id, side: 'left', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -1857,12 +1997,12 @@ export function App() {
                                                 )}
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
-                                                {group.type === 'breastNodule' ? (
+                                                {(group.type === 'breastNodule' || group.type === 'thyroidNodule') ? (
                                                     <>
                                                         {editingGroupName?.groupId === group.id && editingGroupName?.side === 'left' && (
                                                             <>
                                                                 <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
-                                                                <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                                <button onClick={() => group.type === 'breastNodule' ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
                                                             </>
                                                         )}
                                                         {editingGroupsLeft && <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
@@ -1897,7 +2037,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -1946,9 +2086,11 @@ export function App() {
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
-                                                                                    ? 'bg-blue-500 border-blue-600 text-white'
-                                                                                    : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                : k === 'C'
+                                                                                    ? (lastDistKeyPressed === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                    : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
+                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
                                                                             setLastDistKeyPressed(k);
@@ -1956,7 +2098,7 @@ export function App() {
                                                                             if (k === 'C') {
                                                                                 setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
                                                                                 setBreastNodulePendingTexts([]);
-                                                                                setLastDistKeyPressed(null);
+                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 return;
                                                                             }
                                                                             // 若尚未選擇鐘點，只將按下的鍵標成紅色提醒，不做任何距離或複製動作
@@ -2040,6 +2182,56 @@ export function App() {
                                                     </div>
                                                 </div>
                                             </div>
+                                        ) : group.type === 'thyroidNodule' ? (
+                                            <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+                                                <div className="flex justify-between px-2 mb-1">
+                                                    {['right', 'left'].map(lobeSide => (
+                                                        <div key={lobeSide} className="text-center">
+                                                            <p className="text-[10px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
+                                                            <div className="flex items-center justify-center gap-0.5">
+                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
+                                                                <span className="text-slate-400 text-xs">×</span>
+                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="relative mx-auto" style={{ maxWidth: '280px', aspectRatio: '300/240' }}>
+                                                    <svg viewBox="0 0 300 240" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
+                                                        <path d="M 150 48 C 132 24, 96 10, 62 26 C 28 42, 12 82, 12 125 C 12 170, 28 205, 65 222 C 88 232, 112 230, 132 218 C 142 212, 147 202, 150 188 C 153 202, 158 212, 168 218 C 188 230, 212 232, 235 222 C 272 205, 288 170, 288 125 C 288 82, 272 42, 238 26 C 204 10, 168 24, 150 48 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
+                                                        <path d="M 126 222 C 126 234, 134 244, 150 248 C 166 244, 174 234, 174 222" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex justify-between items-center" style={{ padding: '12% 6% 18% 6%' }}>
+                                                        {['right', 'left'].map(lobeSide => (
+                                                            <div key={lobeSide} className="flex flex-col items-center gap-0.5">
+                                                                <div className="grid grid-cols-3 gap-0.5">
+                                                                    {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
+                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="flex gap-1 mt-0.5">
+                                                                    {['N','M'].map((k) => (
+                                                                        <button key={`thy-l-${lobeSide}-act-${k}`} type="button"
+                                                                            className={`w-7 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
+                                                                                k === 'M'
+                                                                                    ? (thyroidLastKeyPressed[lobeSide] === 'M'
+                                                                                        ? ((thyroidNodulePendingTexts[lobeSide] || []).length > 0
+                                                                                            ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                            : 'bg-red-500 border-red-600 text-white')
+                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                    : (thyroidLastKeyPressed[lobeSide] === 'N'
+                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                            }`}
+                                                                            onClick={() => handleThyroidAction(lobeSide, k)}
+                                                                        >{k}</button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ) : (
                                         <div className="grid grid-cols-2 gap-3">
                                             {group.items.map((t, idx) => (
@@ -2104,6 +2296,7 @@ export function App() {
                                         data-group-id={group.id}
                                         data-group-side="right"
                                         {...(group.type === 'breastNodule' && { 'data-breast-nodule-group': 'true' })}
+                                        {...(group.type === 'thyroidNodule' && { 'data-thyroid-nodule-group': 'true' })}
                                         data-group-drop
                                         data-side="right"
                                         data-index={groupIndex}
@@ -2131,7 +2324,7 @@ export function App() {
                                     >
                                             <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || (group.type === 'breastNodule' && editingGroupName?.groupId === group.id && editingGroupName?.side === 'right')) && (
+                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || ((group.type === 'breastNodule' || group.type === 'thyroidNodule') && editingGroupName?.groupId === group.id && editingGroupName?.side === 'right')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -2150,7 +2343,7 @@ export function App() {
                                                     <input
                                                         autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
-                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule'
+                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule' || group.type === 'thyroidNodule'
                                                                 ? '' 
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
@@ -2171,7 +2364,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => group.type === 'breastNodule' ? setEditingGroupName({ groupId: group.id, side: 'right', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
+                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule') ? setEditingGroupName({ groupId: group.id, side: 'right', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2180,12 +2373,12 @@ export function App() {
                                                 )}
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
-                                                {group.type === 'breastNodule' ? (
+                                                {(group.type === 'breastNodule' || group.type === 'thyroidNodule') ? (
                                                     <>
                                                         {editingGroupName?.groupId === group.id && editingGroupName?.side === 'right' && (
                                                             <>
                                                                 <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
-                                                                <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                                <button onClick={() => group.type === 'breastNodule' ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
                                                             </>
                                                         )}
                                                         {editingGroupsRight && <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
@@ -2220,7 +2413,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2269,16 +2462,18 @@ export function App() {
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
-                                                                                    ? 'bg-blue-500 border-blue-600 text-white'
-                                                                                    : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                : k === 'C'
+                                                                                    ? (lastDistKeyPressed === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                    : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
+                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
                                                                             setLastDistKeyPressed(k);
                                                                             if (k === 'C') {
                                                                                 setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
                                                                                 setBreastNodulePendingTexts([]);
-                                                                                setLastDistKeyPressed(null);
+                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 return;
                                                                             }
                                                                             if (breastNoduleGroupParams.clock == null) { return; }
@@ -2345,6 +2540,56 @@ export function App() {
                                                                 ))}
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : group.type === 'thyroidNodule' ? (
+                                            <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+                                                <div className="flex justify-between px-2 mb-1">
+                                                    {['right', 'left'].map(lobeSide => (
+                                                        <div key={lobeSide} className="text-center">
+                                                            <p className="text-[10px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
+                                                            <div className="flex items-center justify-center gap-0.5">
+                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
+                                                                <span className="text-slate-400 text-xs">×</span>
+                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="relative mx-auto" style={{ maxWidth: '280px', aspectRatio: '300/240' }}>
+                                                    <svg viewBox="0 0 300 240" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
+                                                        <path d="M 150 48 C 132 24, 96 10, 62 26 C 28 42, 12 82, 12 125 C 12 170, 28 205, 65 222 C 88 232, 112 230, 132 218 C 142 212, 147 202, 150 188 C 153 202, 158 212, 168 218 C 188 230, 212 232, 235 222 C 272 205, 288 170, 288 125 C 288 82, 272 42, 238 26 C 204 10, 168 24, 150 48 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
+                                                        <path d="M 126 222 C 126 234, 134 244, 150 248 C 166 244, 174 234, 174 222" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex justify-between items-center" style={{ padding: '12% 6% 18% 6%' }}>
+                                                        {['right', 'left'].map(lobeSide => (
+                                                            <div key={lobeSide} className="flex flex-col items-center gap-0.5">
+                                                                <div className="grid grid-cols-3 gap-0.5">
+                                                                    {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
+                                                                        <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="flex gap-1 mt-0.5">
+                                                                    {['N','M'].map((k) => (
+                                                                        <button key={`thy-r-${lobeSide}-act-${k}`} type="button"
+                                                                            className={`w-7 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
+                                                                                k === 'M'
+                                                                                    ? (thyroidLastKeyPressed[lobeSide] === 'M'
+                                                                                        ? ((thyroidNodulePendingTexts[lobeSide] || []).length > 0
+                                                                                            ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                            : 'bg-red-500 border-red-600 text-white')
+                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                    : (thyroidLastKeyPressed[lobeSide] === 'N'
+                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                            }`}
+                                                                            onClick={() => handleThyroidAction(lobeSide, k)}
+                                                                        >{k}</button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             </div>
@@ -2493,6 +2738,45 @@ export function App() {
                             <div className="flex gap-3 pt-2">
                                 <button onClick={() => setEditingSentenceTemplate(false)} className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md shadow-blue-100">儲存</button>
                                 <button onClick={() => setEditingSentenceTemplate(false)} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editingThyroidSentenceTemplate && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-800">編輯甲狀腺結節句子模板</h3>
+                            <button onClick={() => setEditingThyroidSentenceTemplate(false)} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">可用變數</label>
+                                <p className="text-sm text-slate-500 mb-2">{'{W}'} = 長、{'{H}'} = 寬、{'{SIDE}'} = 左/右葉、{'{SIZES}'} = 合併尺寸列表</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">單顆結節模板</label>
+                                <textarea
+                                    value={thyroidNoduleSentenceTemplate}
+                                    onInput={(e) => setThyroidNoduleSentenceTemplate(e.target.value)}
+                                    rows="3"
+                                    className="w-full px-4 py-3 border rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm leading-relaxed"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">同位置多顆合併模板</label>
+                                <textarea
+                                    value={thyroidNoduleMergedTemplate}
+                                    onInput={(e) => setThyroidNoduleMergedTemplate(e.target.value)}
+                                    rows="3"
+                                    className="w-full px-4 py-3 border rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm leading-relaxed"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={() => setEditingThyroidSentenceTemplate(false)} className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md shadow-blue-100">儲存</button>
+                                <button onClick={() => setEditingThyroidSentenceTemplate(false)} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200">取消</button>
                             </div>
                         </div>
                     </div>
