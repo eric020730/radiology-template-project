@@ -2172,10 +2172,10 @@ export function App() {
                                                 </div>
                                                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">方位與距離</p>
-                                                    <div className="flex justify-center mb-2 shrink-0 mx-auto w-full" style={{ maxWidth: '160px', aspectRatio: '1/1' }}>
-                                                        <svg viewBox="0 0 200 200" className="w-full h-full">
-                                                            <circle cx="100" cy="100" r="82" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
-                                                            <circle cx="100" cy="100" r="58" fill="white" stroke="#e2e8f0" strokeWidth="1" />
+                                                    <div className="relative flex justify-center items-center mx-auto shrink-0 w-full" style={{ maxWidth: '160px', aspectRatio: '1/1' }}>
+                                                        <svg viewBox="0 0 200 200" className="w-full h-full absolute inset-0">
+                                                            <circle cx="100" cy="100" r="82" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" style={{ pointerEvents: 'none' }} />
+                                                            <circle cx="100" cy="100" r="58" fill="white" stroke="#e2e8f0" strokeWidth="1" style={{ pointerEvents: 'none' }} />
                                                             {[12,1,2,3,4,5,6,7,8,9,10,11].map((h) => {
                                                                 const angleDeg = (270 + h * 30) % 360;
                                                                 const angleRad = (angleDeg * Math.PI) / 180;
@@ -2184,7 +2184,15 @@ export function App() {
                                                                 const y = 100 + r * Math.sin(angleRad);
                                                                 const isSelected = breastNoduleGroupParams.clock === h;
                                                                 return (
-                                                                    <g key={h} onClick={() => setBreastNoduleGroupParams(p => ({ ...p, clock: h }))} style={{ cursor: 'pointer' }} transform={`translate(${x},${y})`}>
+                                                                    <g
+                                                                        key={h}
+                                                                        onClick={() => {
+                                                                            setBreastNoduleGroupParams(p => ({ ...p, clock: h }));
+                                                                            setLastDistKeyPressed(null);
+                                                                        }}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        transform={`translate(${x},${y})`}
+                                                                    >
                                                                         <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? '#3b82f6' : '#e2e8f0'} stroke={isSelected ? '#2563eb' : '#cbd5e1'} strokeWidth={2} />
                                                                         <foreignObject x={-13} y={-13} width={26} height={26}>
                                                                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{h}</div>
@@ -2193,16 +2201,90 @@ export function App() {
                                                                 );
                                                             })}
                                                         </svg>
-                                                    </div>
-                                                    <div className="flex items-center justify-center gap-1 mb-2">
-                                                        <span className="text-xs text-slate-500">距乳頭</span>
-                                                        <span className="px-2 py-1 rounded text-sm font-mono min-w-[2.5rem] bg-white border border-slate-200">{breastNoduleGroupParams.distStr || '0'}</span>
-                                                        <span className="text-xs text-slate-500">cm</span>
-                                                    </div>
-                                                    <div className="grid grid-cols-5 gap-1 w-[160px] mx-auto">
-                                                        {['1','2','3','4','5','6','7','8','9','0','C'].map((k) => (
-                                                            <button key={k} type="button" onClick={() => { if (k === 'C') setBreastNodulePendingTexts([]); setBreastNoduleGroupParams(p => ({ ...p, distStr: k === 'C' ? '' : p.distStr + k })); }} className="w-7 h-7 rounded bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
-                                                        ))}
+                                                        <div className="relative z-10 flex justify-center items-center pointer-events-none" style={{ width: '100%', height: '100%' }}>
+                                                            <div className="pointer-events-auto grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
+                                                                {['4','5','6','1','2','3','C','N','M'].map((k) => (
+                                                                    <button
+                                                                        key={`dist-r-${k}`}
+                                                                        type="button"
+                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
+                                                                            k === 'M'
+                                                                                ? (lastDistKeyPressed === 'M'
+                                                                                    ? (breastNodulePendingTexts.length > 0
+                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                        : 'bg-red-500 border-red-600 text-white')
+                                                                                    : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
+                                                                                    ? 'bg-blue-500 border-blue-600 text-white'
+                                                                                    : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                        }`}
+                                                                        onClick={() => {
+                                                                            setLastDistKeyPressed(k);
+                                                                            if (k === 'C') {
+                                                                                setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
+                                                                                setBreastNodulePendingTexts([]);
+                                                                                setLastDistKeyPressed(null);
+                                                                                return;
+                                                                            }
+                                                                            if (breastNoduleGroupParams.clock == null) { return; }
+                                                                            const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
+                                                                            const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                            if (w === 0 || h === 0) { return; }
+                                                                            const baseDistStr = breastNoduleGroupParams.distStr;
+                                                                            let newDistStr = baseDistStr;
+                                                                            if (['4','5','6','1','2','3'].includes(k)) {
+                                                                                newDistStr = k;
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            }
+                                                                            const c = breastNoduleGroupParams.clock;
+                                                                            const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
+                                                                            const dist = k === 'N' ? 'N' : String(numericDist);
+                                                                            let singleText = breastNoduleSentenceTemplate
+                                                                                .replace(/\{W\}/g, String(w))
+                                                                                .replace(/\{H\}/g, String(h))
+                                                                                .replace(/\{C\}/g, String(c))
+                                                                                .replace(/\{D\}/g, '/' + dist + ' cm');
+                                                                            if (w >= 1 || h >= 1) {
+                                                                                singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                            }
+                                                                            let textToCopy = singleText;
+
+                                                                            if (k === 'M') {
+                                                                                textToCopy = null;
+                                                                                setBreastNodulePendingTexts(prev => {
+                                                                                    if (prev.length > 0 && prev[prev.length - 1] === singleText) return prev;
+                                                                                    return [...prev, singleText];
+                                                                                });
+                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
+                                                                                setBreastNoduleGroupParams(p => ({
+                                                                                    ...p,
+                                                                                    sizeWStr: '0',
+                                                                                    sizeHStr: '0',
+                                                                                    clock: null,
+                                                                                    activeField: 'sizeW',
+                                                                                    reEnterPending: true
+                                                                                }));
+                                                                            } else if (breastNodulePendingTexts.length > 0 && k !== 'C') {
+                                                                                const allTexts = [...breastNodulePendingTexts, singleText];
+                                                                                textToCopy = allTexts.join('\n');
+                                                                                setBreastNodulePendingTexts(allTexts);
+                                                                            }
+                                                                            if (textToCopy) {
+                                                                                const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
+                                                                                const finalText = lines
+                                                                                    .map(line => {
+                                                                                        const core = line.replace(/^\s*-\s*/, '');
+                                                                                        return `   - ${core}`;
+                                                                                    })
+                                                                                    .join('\n');
+                                                                                navigator.clipboard.writeText(finalText).catch(() => {});
+                                                                            }
+                                                                            setTimeout(() => setLastDistKeyPressed(null), 1000);
+                                                                        }}
+                                                                    >{k}</button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
