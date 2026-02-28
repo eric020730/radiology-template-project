@@ -47,6 +47,24 @@ function hasLobePattern(content) {
     return /\b(RUL|RML|RLL|LUL|LLL)\b/i.test(content);
 }
 
+// C 清除鍵圖示（垃圾桶 #2）
+function EraserIcon({ size = 12, className = '' }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className={className} aria-hidden="true">
+            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </svg>
+    );
+}
+
+// M 鍵圖示（加號 M1，加入暫存）
+function ListIcon({ size = 12, className = '' }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className} aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+        </svg>
+    );
+}
+
 // --- TemplateButton：定義在模組層級以確保 Preact 有穩定的元件引用 ---
 function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }) {
     const {
@@ -2037,7 +2055,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2093,6 +2111,15 @@ export function App() {
                                                                                         : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
+                                                                            // M 鍵：若尺寸/方位/距離未完整，不反白也不觸發任何動作
+                                                                            if (k === 'M') {
+                                                                                const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
+                                                                                const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                                const distStr = breastNoduleGroupParams.distStr;
+                                                                                if (w === 0 || h === 0 || breastNoduleGroupParams.clock == null || distStr === '' || distStr == null) {
+                                                                                    return;
+                                                                                }
+                                                                            }
                                                                             setLastDistKeyPressed(k);
                                                                             // C 鍵：全部歸零（含左側長寬），不產生句子也不複製
                                                                             if (k === 'C') {
@@ -2174,7 +2201,7 @@ export function App() {
                                                                             }
                                                                         }}
                                                                     >
-                                                                        {k}
+                                                                        {k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <ListIcon size={12} /> : k}
                                                                     </button>
                                                                 ))}
                                                             </div>
@@ -2413,7 +2440,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2469,6 +2496,15 @@ export function App() {
                                                                                         : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
+                                                                            // M 鍵：若尺寸/方位/距離未完整，不反白也不觸發任何動作
+                                                                            if (k === 'M') {
+                                                                                const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
+                                                                                const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                                const distStr = breastNoduleGroupParams.distStr;
+                                                                                if (w === 0 || h === 0 || breastNoduleGroupParams.clock == null || distStr === '' || distStr == null) {
+                                                                                    return;
+                                                                                }
+                                                                            }
                                                                             setLastDistKeyPressed(k);
                                                                             if (k === 'C') {
                                                                                 setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
@@ -2536,7 +2572,7 @@ export function App() {
                                                                             }
                                                                             setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                         }}
-                                                                    >{k}</button>
+                                                                    >{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <ListIcon size={12} /> : k}</button>
                                                                 ))}
                                                             </div>
                                                         </div>

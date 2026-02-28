@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C 清除鍵 - 圖示選項</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; background: #f1f5f9; }
+    h1 { font-size: 1.25rem; color: #334155; margin-bottom: 8px; }
+    p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+    .card {
+      background: white; border-radius: 12px; padding: 20px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08); border: 2px solid #e2e8f0;
+    }
+    .card:hover { border-color: #94a3b8; }
+    .card h3 { font-size: 12px; color: #64748b; margin: 12px 0 4px; font-weight: 600; }
+    .card .desc { font-size: 11px; color: #94a3b8; }
+    .icon-wrap {
+      width: 48px; height: 48px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      background: #f8fafc; border-radius: 10px; color: #475569;
+    }
+    .icon-wrap.small { width: 32px; height: 32px; }
+    .icon-wrap svg { flex-shrink: 0; }
+    .preview-btn {
+      margin-top: 8px; width: 40px; height: 40px; border-radius: 8px;
+      border: 1px solid #cbd5e1; background: white; display: inline-flex;
+      align-items: center; justify-content: center; color: #475569;
+    }
+    .preview-btn:hover { background: #f1f5f9; }
+    .preview-btn.active { background: #3b82f6; border-color: #2563eb; color: white; }
+  </style>
+</head>
+<body>
+  <h1>C 清除鍵 － 可替換圖示一覽（共 20 個）</h1>
+  <p>下方為可選的清除／橡皮擦圖示。每張卡片左為大圖、右為按鈕尺寸 (約 20×20px) 預覽。</p>
+
+  <section style="margin-bottom: 32px;">
+    <h2 style="font-size: 14px; color: #64748b; margin-bottom: 12px;">一頁總覽（編號 1～20）</h2>
+    <div class="grid" style="grid-template-columns: repeat(10, minmax(72px, 1fr)); gap: 12px;">
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.41c-.78.78-2.05.78-2.83 0L3.58 14.41c-.79-.78-.79-2.05 0-2.83l9.17-9.17c.78-.79 2.05-.79 2.83 0z"/></svg></div><h3>1</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div><h3>2</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/></svg></div><h3>3</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div><h3>4</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M5 11h14c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1H5c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1z"/></svg></div><h3>5</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg></div><h3>6</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></div><h3>7</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div><h3>8</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div><h3>9</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div><h3>10</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 20h2v-6l8-10 4 4-8 10v2H3v-2zm14-8l-2-2 4-5-3-3-5 4-2-2 6-6 5 5-6 6z"/></svg></div><h3>11</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></div><h3>12</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9 9h6a3 3 0 0 1 0 6H9"/></svg></div><h3>13</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 14H4c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2zm-2-8H6L2 14h4l2-4h8l2 4h4L14 6z"/></svg></div><h3>14</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/></svg></div><h3>15</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg></div><h3>16</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v4h4"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div><h3>17</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div><h3>18</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div><h3>19</h3></div>
+      <div class="card" style="padding: 12px;"><div class="icon-wrap small" style="margin-bottom: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M5 11h14v8c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-8z" opacity=".9"/><path d="M8 11V8l4-4 4 4v3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></div><h3>20</h3></div>
+    </div>
+  </section>
+
+  <h2 style="font-size: 14px; color: #64748b; margin-bottom: 12px;">詳細預覽（含按鈕大小）</h2>
+  <div class="grid">
+    <!-- 1. 目前使用：圓角菱形 (橡皮擦) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.41c-.78.78-2.05.78-2.83 0L3.58 14.41c-.79-.78-.79-2.05 0-2.83l9.17-9.17c.78-.79 2.05-.79 2.83 0z" />
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.41c-.78.78-2.05.78-2.83 0L3.58 14.41c-.79-.78-.79-2.05 0-2.83l9.17-9.17c.78-.79 2.05-.79 2.83 0z" /></svg></div>
+      <h3>1. 圓角菱形（目前）</h3>
+      <p class="desc">EraserIcon 現用</p>
+    </div>
+
+    <!-- 2. 垃圾桶 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
+      <h3>2. 垃圾桶</h3>
+      <p class="desc">Trash / 刪除</p>
+    </div>
+
+    <!-- 3. 倒退鍵 (⌫) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/></svg></div>
+      <h3>3. 倒退鍵</h3>
+      <p class="desc">Backspace / 清除</p>
+    </div>
+
+    <!-- 4. 圓形 X (關閉) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M15 9l-6 6M9 9l6 6"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div>
+      <h3>4. 圓形 X</h3>
+      <p class="desc">Close / 關閉</p>
+    </div>
+
+    <!-- 5. 橫條橡皮擦 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M5 11h14c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1H5c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M5 11h14c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1H5c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1z"/></svg></div>
+      <h3>5. 橫條</h3>
+      <p class="desc">Eraser bar</p>
+    </div>
+
+    <!-- 6. 圓形內減號 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 12h8"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg></div>
+      <h3>6. 圓形減號</h3>
+      <p class="desc">Remove / 移除</p>
+    </div>
+
+    <!-- 7. 單純 X -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+      <h3>7. 叉叉</h3>
+      <p class="desc">X / 清除</p>
+    </div>
+
+    <!-- 8. 旋轉還原 (undo) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
+      <h3>8. 還原</h3>
+      <p class="desc">Undo / 重設</p>
+    </div>
+
+    <!-- 9. 重新整理 (refresh) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
+      <h3>9. 重新整理</h3>
+      <p class="desc">Refresh / 重設</p>
+    </div>
+
+    <!-- 10. 方塊 X -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 9l6 6M15 9l-6 6"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div>
+      <h3>10. 方塊 X</h3>
+      <p class="desc">Close box</p>
+    </div>
+
+    <!-- 11. 掃帚 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M3 20h2v-6l8-10 4 4-8 10v2H3v-2zm14-8l-2-2 4-5-3-3-5 4-2-2 6-6 5 5-6 6z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M3 20h2v-6l8-10 4 4-8 10v2H3v-2zm14-8l-2-2 4-5-3-3-5 4-2-2 6-6 5 5-6 6z"/></svg></div>
+      <h3>11. 掃帚</h3>
+      <p class="desc">Broom / 清除</p>
+    </div>
+
+    <!-- 12. 畫筆 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></div>
+      <h3>12. 畫筆</h3>
+      <p class="desc">Pen / 編輯</p>
+    </div>
+
+    <!-- 13. 圓形 C 字 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9 9h6a3 3 0 0 1 0 6H9"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9 9h6a3 3 0 0 1 0 6H9"/></svg></div>
+      <h3>13. 圓形 C</h3>
+      <p class="desc">Clear 字首</p>
+    </div>
+
+    <!-- 14. 梯形橡皮擦 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M20 14H4c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2zm-2-8H6L2 14h4l2-4h8l2 4h4L14 6z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20 14H4c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2zm-2-8H6L2 14h4l2-4h8l2 4h4L14 6z"/></svg></div>
+      <h3>14. 梯形橡皮擦</h3>
+      <p class="desc">Eraser 造型</p>
+    </div>
+
+    <!-- 15. 方塊減號 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M8 12h8"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/></svg></div>
+      <h3>15. 方塊減號</h3>
+      <p class="desc">Remove</p>
+    </div>
+
+    <!-- 16. 禁止 (圓圈斜線) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M4.93 4.93l14.14 14.14"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg></div>
+      <h3>16. 禁止</h3>
+      <p class="desc">Ban / 清除</p>
+    </div>
+
+    <!-- 17. 逆時針旋轉 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 4v4h4"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v4h4"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
+      <h3>17. 逆時針旋轉</h3>
+      <p class="desc">Rotate left</p>
+    </div>
+
+    <!-- 18. 空心圓 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>
+      <h3>18. 空心圓</h3>
+      <p class="desc">Empty / 清空</p>
+    </div>
+
+    <!-- 19. 箭頭進入 (reset) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
+      <h3>19. 箭頭還原</h3>
+      <p class="desc">Undo 另一款</p>
+    </div>
+
+    <!-- 20. 海綿/擦拭 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M5 11h14v8c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-8z" opacity=".9"/>
+          <path d="M8 11V8l4-4 4 4v3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M5 11h14v8c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-8z" opacity=".9"/><path d="M8 11V8l4-4 4 4v3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></div>
+      <h3>20. 海綿</h3>
+      <p class="desc">Sponge / 擦拭</p>
+    </div>
+  </div>
+
+  <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;" />
+  <h1 style="margin-top: 0;">M 鍵圖示選項（加入暫存／合併多顆）</h1>
+  <p>以下 5 個圖示可代表「按 M 加入當前結節到暫存、供多顆一併輸出」的功能，擇一替換方位與距離區的 M 按鈕。</p>
+
+  <div class="grid" style="grid-template-columns: repeat(5, minmax(140px, 1fr));">
+    <!-- M1. 加號 (Plus) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+      <h3>M1. 加號</h3>
+      <p class="desc">Plus / 加入</p>
+    </div>
+
+    <!-- M2. 列表 (List) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+      <h3>M2. 列表</h3>
+      <p class="desc">List / 加入列表</p>
+    </div>
+
+    <!-- M3. 堆疊 (Stack) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="8" height="8" rx="1"/>
+          <rect x="12" y="12" width="8" height="8" rx="1"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="8" height="8" rx="1"/><rect x="12" y="12" width="8" height="8" rx="1"/></svg></div>
+      <h3>M3. 堆疊</h3>
+      <p class="desc">Stack / 多筆堆疊</p>
+    </div>
+
+    <!-- M4. 書籤 (Bookmark) -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+      <h3>M4. 書籤</h3>
+      <p class="desc">Bookmark / 暫存</p>
+    </div>
+
+    <!-- M5. 圓形加號 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v8M8 12h8"/>
+        </svg>
+      </div>
+      <div class="icon-wrap small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></div>
+      <h3>M5. 圓形加號</h3>
+      <p class="desc">Add to / 加入</p>
+    </div>
+  </div>
+
+  <p style="margin-top: 24px; font-size: 12px;">C 鍵：告訴我想用編號 1～20 的哪一個。M 鍵：告訴我想用 M1～M5 的哪一個，我可以幫你改 app.jsx。</p>
+</body>
+</html>
