@@ -483,22 +483,6 @@ export function App() {
         };
     }, [editingTabName, dragTabState]);
 
-    // 點擊「乳房結節描述」組套外時，尺寸與方位、距離數字歸零
-    // 使用 functional updater 並檢查值是否真的改變，避免不必要的 re-render
-    useEffect(() => {
-        const handleClickOutsideBreastNodule = (event) => {
-            if (event.target.closest('[data-settings-button]') || event.target.closest('[data-settings-panel]') || event.target.closest('[data-delete-confirm-modal]')) return;
-            if (event.target.closest('[data-breast-nodule-group]')) return;
-            setBreastNoduleGroupParams(prev => {
-                if (prev.sizeWStr === '0' && prev.sizeHStr === '0' && prev.clock === null && prev.distStr === '0' && prev.activeField === null) return prev;
-                return { sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null };
-            });
-            setLastDistKeyPressed(prev => prev === null ? prev : null);
-            setBreastNodulePendingTexts(prev => prev.length === 0 ? prev : []);
-        };
-        document.addEventListener('mousedown', handleClickOutsideBreastNodule);
-        return () => document.removeEventListener('mousedown', handleClickOutsideBreastNodule);
-    }, []);
 
     // 正在編輯分組名稱時，點擊該分組以外的區域 → 視為結束編輯；若未輸入內容（空白或仍為「新分組」）則刪除該分組
     useEffect(() => {
@@ -1935,17 +1919,24 @@ export function App() {
                                                                             const c = breastNoduleGroupParams.clock;
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
                                                                             const dist = k === 'N' ? 'N' : String(numericDist);
-                                                                            const singleText = breastNoduleSentenceTemplate
+                                                                            let singleText = breastNoduleSentenceTemplate
                                                                                 .replace(/\{W\}/g, String(w))
                                                                                 .replace(/\{H\}/g, String(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
+                                                                            // 長或寬任一 >= 1 時，自動移除 "small"
+                                                                            if (w >= 1 || h >= 1) {
+                                                                                singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                            }
                                                                             let textToCopy = singleText;
 
                                                                             // 若按下 M，視為「暫存一顆結節」但先不複製，之後完成下一顆距離時一次複製多顆
                                                                             if (k === 'M') {
                                                                                 textToCopy = null; // 此時不直接複製
-                                                                                setBreastNodulePendingTexts(prev => [...prev, singleText]);
+                                                                                setBreastNodulePendingTexts(prev => {
+                                                                                    if (prev.length > 0 && prev[prev.length - 1] === singleText) return prev;
+                                                                                    return [...prev, singleText];
+                                                                                });
                                                                                 setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 // M1 之後：重設尺寸長寬與鐘面為 0/未選取，並讓「長」自動反白，方便輸入下一顆結節的尺寸
                                                                                 setBreastNoduleGroupParams(p => ({
