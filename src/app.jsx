@@ -351,7 +351,8 @@ export function App() {
     const [showSettings, setShowSettings] = useState(false);
     const [breastNoduleGroupParams, setBreastNoduleGroupParams] = useState({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
     const [breastNoduleSentenceTemplate, setBreastNoduleSentenceTemplate] = useState("A {W}x{H}cm small hypoechoic nodule at {C}'{D} from nipple.");
-    const [breastNodulePendingTexts, setBreastNodulePendingTexts] = useState([]); // 暫存多顆結節的句子，搭配 M 鍵使用
+    const [breastNoduleMergedTemplate, setBreastNoduleMergedTemplate] = useState("Some small hypoechoic nodules ({SIZES}) at {C}'{D} from nipple.");
+    const [breastNodulePendingTexts, setBreastNodulePendingTexts] = useState([]); // 暫存多顆結節的結構資料 { w, h, clock }，搭配 M 鍵使用
     const [editingSentenceTemplate, setEditingSentenceTemplate] = useState(false);
     const [lastDistKeyPressed, setLastDistKeyPressed] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
@@ -657,14 +658,18 @@ export function App() {
                 left: (tab.left || []).map(group => {
                     if (group.type !== 'breastNodule') return group;
                     const baseItems = group.items || [];
-                    // 移除舊的「句子模板」item，避免重複
-                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板');
+                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
                     const items = [
                         ...withoutTemplate,
                         {
                             id: `${group.id}-template`,
                             name: '句子模板',
                             content: breastNoduleSentenceTemplate
+                        },
+                        {
+                            id: `${group.id}-merged-template`,
+                            name: '合併模板',
+                            content: breastNoduleMergedTemplate
                         }
                     ];
                     return { ...group, items };
@@ -672,13 +677,18 @@ export function App() {
                 right: (tab.right || []).map(group => {
                     if (group.type !== 'breastNodule') return group;
                     const baseItems = group.items || [];
-                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板');
+                    const withoutTemplate = baseItems.filter(it => it.name !== '句子模板' && it.name !== '合併模板');
                     const items = [
                         ...withoutTemplate,
                         {
                             id: `${group.id}-template`,
                             name: '句子模板',
                             content: breastNoduleSentenceTemplate
+                        },
+                        {
+                            id: `${group.id}-merged-template`,
+                            name: '合併模板',
+                            content: breastNoduleMergedTemplate
                         }
                     ];
                     return { ...group, items };
@@ -1182,6 +1192,44 @@ export function App() {
         if (!str) return 0;
         if (str.includes('.')) return parseFloat(str) || 0;
         return parseFloat(`0.${str}`) || 0;
+    };
+
+    const generateNoduleTexts = (nodules, dist) => {
+        const groups = {};
+        const order = [];
+        for (const n of nodules) {
+            const key = String(n.clock);
+            if (!groups[key]) { groups[key] = { clock: n.clock, items: [] }; order.push(key); }
+            groups[key].items.push(n);
+        }
+        const lines = [];
+        for (const key of order) {
+            const g = groups[key];
+            if (g.items.length === 1) {
+                const { w, h } = g.items[0];
+                let text = breastNoduleSentenceTemplate
+                    .replace(/\{W\}/g, String(w))
+                    .replace(/\{H\}/g, String(h))
+                    .replace(/\{C\}/g, String(g.clock))
+                    .replace(/\{D\}/g, '/' + dist + ' cm');
+                if (w >= 1 || h >= 1) {
+                    text = text.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                }
+                lines.push(text);
+            } else {
+                const sizes = g.items.map(n => `${n.w}x${n.h}cm`).join(', ');
+                const anyLarge = g.items.some(n => n.w >= 1 || n.h >= 1);
+                let text = breastNoduleMergedTemplate
+                    .replace(/\{SIZES\}/g, sizes)
+                    .replace(/\{C\}/g, String(g.clock))
+                    .replace(/\{D\}/g, '/' + dist + ' cm');
+                if (anyLarge) {
+                    text = text.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                }
+                lines.push(text);
+            }
+        }
+        return lines;
     };
 
     const applyBreastNoduleKeypad = (key) => {
@@ -1780,7 +1828,7 @@ export function App() {
                                                         autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
                                                             (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule'
-                                                                ? ''
+                                                                ? '' 
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
                                                         value={group.name}
@@ -1938,15 +1986,17 @@ export function App() {
                                                                             }
                                                                             let textToCopy = singleText;
 
-                                                                            // 若按下 M，視為「暫存一顆結節」但先不複製，之後完成下一顆距離時一次複製多顆
                                                                             if (k === 'M') {
-                                                                                textToCopy = null; // 此時不直接複製
+                                                                                textToCopy = null;
+                                                                                const noduleData = { w, h, clock: c };
                                                                                 setBreastNodulePendingTexts(prev => {
-                                                                                    if (prev.length > 0 && prev[prev.length - 1] === singleText) return prev;
-                                                                                    return [...prev, singleText];
+                                                                                    if (prev.length > 0) {
+                                                                                        const last = prev[prev.length - 1];
+                                                                                        if (last.w === w && last.h === h && last.clock === c) return prev;
+                                                                                    }
+                                                                                    return [...prev, noduleData];
                                                                                 });
                                                                                 setTimeout(() => setLastDistKeyPressed(null), 1000);
-                                                                                // M1 之後：重設尺寸長寬與鐘面為 0/未選取，並讓「長」自動反白，方便輸入下一顆結節的尺寸
                                                                                 setBreastNoduleGroupParams(p => ({
                                                                                     ...p,
                                                                                     sizeWStr: '0',
@@ -1956,11 +2006,10 @@ export function App() {
                                                                                     reEnterPending: true
                                                                                 }));
                                                                             } else if (breastNodulePendingTexts.length > 0 && k !== 'C') {
-                                                                                // 已經有暫存的結節，且這次是完成另一顆（距離鍵或 N），一次複製所有，
-                                                                                // 並把最新這一顆也加入暫存，方便之後再繼續新增結節時一併帶出
-                                                                                const allTexts = [...breastNodulePendingTexts, singleText];
-                                                                                textToCopy = allTexts.join('\n');
-                                                                                setBreastNodulePendingTexts(allTexts);
+                                                                                const allNodules = [...breastNodulePendingTexts, { w, h, clock: c }];
+                                                                                const allLines = generateNoduleTexts(allNodules, dist);
+                                                                                textToCopy = allLines.join('\n');
+                                                                                setBreastNodulePendingTexts(allNodules);
                                                                             }
                                                                             if (textToCopy) {
                                                                                 // 統一格式：每一行都加上「三個空格 + - + 空格」
@@ -2102,7 +2151,7 @@ export function App() {
                                                         autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
                                                             (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule'
-                                                                ? ''
+                                                                ? '' 
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
                                                         value={group.name}
@@ -2257,9 +2306,13 @@ export function App() {
 
                                                                             if (k === 'M') {
                                                                                 textToCopy = null;
+                                                                                const noduleData = { w, h, clock: c };
                                                                                 setBreastNodulePendingTexts(prev => {
-                                                                                    if (prev.length > 0 && prev[prev.length - 1] === singleText) return prev;
-                                                                                    return [...prev, singleText];
+                                                                                    if (prev.length > 0) {
+                                                                                        const last = prev[prev.length - 1];
+                                                                                        if (last.w === w && last.h === h && last.clock === c) return prev;
+                                                                                    }
+                                                                                    return [...prev, noduleData];
                                                                                 });
                                                                                 setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 setBreastNoduleGroupParams(p => ({
@@ -2271,9 +2324,10 @@ export function App() {
                                                                                     reEnterPending: true
                                                                                 }));
                                                                             } else if (breastNodulePendingTexts.length > 0 && k !== 'C') {
-                                                                                const allTexts = [...breastNodulePendingTexts, singleText];
-                                                                                textToCopy = allTexts.join('\n');
-                                                                                setBreastNodulePendingTexts(allTexts);
+                                                                                const allNodules = [...breastNodulePendingTexts, { w, h, clock: c }];
+                                                                                const allLines = generateNoduleTexts(allNodules, dist);
+                                                                                textToCopy = allLines.join('\n');
+                                                                                setBreastNodulePendingTexts(allNodules);
                                                                             }
                                                                             if (textToCopy) {
                                                                                 const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
@@ -2416,14 +2470,23 @@ export function App() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">可用變數</label>
-                                <p className="text-sm text-slate-500 mb-2">{'{W}'} = 長、{'{H}'} = 寬、{'{C}'} = 鐘點、{'{D}'} = 距離</p>
+                                <p className="text-sm text-slate-500 mb-2">{'{W}'} = 長、{'{H}'} = 寬、{'{C}'} = 鐘點、{'{D}'} = 距離、{'{SIZES}'} = 合併尺寸列表</p>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">句子模板</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">單顆結節模板</label>
                                 <textarea
                                     value={breastNoduleSentenceTemplate}
                                     onInput={(e) => setBreastNoduleSentenceTemplate(e.target.value)}
-                                    rows="4"
+                                    rows="3"
+                                    className="w-full px-4 py-3 border rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm leading-relaxed"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">同位置多顆合併模板</label>
+                                <textarea
+                                    value={breastNoduleMergedTemplate}
+                                    onInput={(e) => setBreastNoduleMergedTemplate(e.target.value)}
+                                    rows="3"
                                     className="w-full px-4 py-3 border rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm leading-relaxed"
                                 />
                             </div>
