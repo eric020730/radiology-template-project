@@ -1812,7 +1812,10 @@ export function App() {
                                                 {group.type === 'breastNodule' ? (
                                                     <>
                                                         {editingGroupName?.groupId === group.id && editingGroupName?.side === 'left' && (
-                                                            <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                            <>
+                                                                <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
+                                                                <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                            </>
                                                         )}
                                                         {editingGroupsLeft && <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
                                                     </>
@@ -2131,7 +2134,10 @@ export function App() {
                                                 {group.type === 'breastNodule' ? (
                                                     <>
                                                         {editingGroupName?.groupId === group.id && editingGroupName?.side === 'right' && (
-                                                            <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                            <>
+                                                                <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
+                                                                <button onClick={() => setEditingSentenceTemplate(!editingSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                            </>
                                                         )}
                                                         {editingGroupsRight && <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
                                                     </>
