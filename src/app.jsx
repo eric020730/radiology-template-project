@@ -1281,12 +1281,17 @@ export function App() {
         setEditingGroupName(null);
     };
 
-    // 重新命名分組
+    // 重新命名分組；若新名稱為「乳房結節描述」則設為乳房結節類型，若從該名稱改為其他則清除類型
     const renameGroup = (side, groupId, newName) => {
         const updatedTabs = tabs.map((tab, ti) => {
             if (ti !== activeTabIdx) return tab;
             const groups = side === 'left' ? [...tab.left] : [...tab.right];
-            const next = groups.map(g => g.id === groupId ? { ...g, name: newName } : g);
+            const next = groups.map(g => {
+                if (g.id !== groupId) return g;
+                const isBreastName = String(newName).trim() === '乳房結節描述';
+                const type = isBreastName ? 'breastNodule' : (g.type === 'breastNodule' ? undefined : g.type);
+                return { ...g, name: newName, type };
+            });
             return side === 'left' ? { ...tab, left: next } : { ...tab, right: next };
         });
         setTabs(updatedTabs);
