@@ -59,10 +59,10 @@ function EraserIcon({ size = 12, className = '' }) {
     );
 }
 
-// M 鍵圖示（加號 A1 圓角粗線＋，加入暫存）
+// M 鍵圖示（加號 A1 圓角粗線＋，加入暫存）；color:inherit 使線條與按鈕數字同色
 function ListIcon({ size = 12, className = '' }) {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" className={className} aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" className={className} style={{ color: 'inherit' }} aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
         </svg>
     );
@@ -2069,7 +2069,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2107,24 +2107,29 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 flex justify-center items-center pointer-events-none" style={{ width: '100%', height: '100%' }}>
                                                             <div className="pointer-events-auto grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
-                                                                {['4','5','6','1','2','3','C','N','M'].map((k) => (
+                                                                {['4','5','6','1','2','3','M','N','.'].map((k) => (
                                                                     <button
                                                                         key={`dist-${k}`}
                                                                         type="button"
-                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
+                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${
                                                                             k === 'M'
                                                                                 ? (lastDistKeyPressed === 'M'
                                                                                     ? (breastNodulePendingTexts.length > 0
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                : k === 'C'
-                                                                                    ? (lastDistKeyPressed === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                : k === '.'
+                                                                                    ? 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'
                                                                                     : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
+                                                                            // . 鍵：與左側尺寸鍵盤的小數點相同
+                                                                            if (k === '.') {
+                                                                                applyBreastNoduleKeypad('.');
+                                                                                return;
+                                                                            }
                                                                             // M 鍵：若尺寸/方位/距離未完整，不反白也不觸發任何動作
                                                                             if (k === 'M') {
                                                                                 const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
@@ -2135,13 +2140,6 @@ export function App() {
                                                                                 }
                                                                             }
                                                                             setLastDistKeyPressed(k);
-                                                                            // C 鍵：全部歸零（含左側長寬），不產生句子也不複製
-                                                                            if (k === 'C') {
-                                                                                setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
-                                                                                setBreastNodulePendingTexts([]);
-                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
-                                                                                return;
-                                                                            }
                                                                             // 若尚未選擇鐘點，只將按下的鍵標成紅色提醒，不做任何距離或複製動作
                                                                             if (breastNoduleGroupParams.clock == null) { return; }
                                                                             // 若長或寬為 0，視為尚未輸入完整尺寸，不產生句子也不更新距離
@@ -2150,7 +2148,7 @@ export function App() {
                                                                             if (w === 0 || h === 0) { return; }
                                                                             const baseDistStr = breastNoduleGroupParams.distStr;
                                                                             let newDistStr = baseDistStr;
-                                                                            // 更新距離 state（C=清除，數字鍵=重設，N/M 不改距離）
+                                                                            // 更新距離 state（數字鍵=重設，N/M 不改距離）
                                                                             if (['4','5','6','1','2','3'].includes(k)) {
                                                                                 newDistStr = k; // 數字鍵一律視為重新輸入距離（單一位數）
                                                                                 setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
@@ -2188,7 +2186,7 @@ export function App() {
                                                                                     activeField: 'sizeW',
                                                                                     reEnterPending: true
                                                                                 }));
-                                                                            } else if (breastNodulePendingTexts.length > 0 && k !== 'C') {
+                                                                            } else if (breastNodulePendingTexts.length > 0 && k !== '.') {
                                                                                 const allNodules = [...breastNodulePendingTexts, { w, h, clock: c }];
                                                                                 const allLines = generateNoduleTexts(allNodules, dist);
                                                                                 textToCopy = allLines.join('\n');
@@ -2215,7 +2213,7 @@ export function App() {
                                                                             }
                                                                         }}
                                                                     >
-                                                                        {k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <ListIcon size={12} /> : k}
+                                                                        {k === 'M' ? '+' : k}
                                                                     </button>
                                                                 ))}
                                                             </div>
@@ -2239,12 +2237,12 @@ export function App() {
                                                 </div>
                                                 <div className="relative mx-auto" style={{ maxWidth: '200px', aspectRatio: '480/374' }}>
                                                     <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
-                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '5% 9% 2% 9%' }}>
+                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5% 4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
                                                                 <div className="grid grid-cols-3 gap-0.5">
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-4 h-4 rounded bg-white/90 border border-slate-200 text-slate-700 text-[8px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium leading-none hover:bg-slate-100 flex items-center justify-center shrink-0">{k === 'C' ? <EraserIcon size={12} /> : k}</button>
                                                                     ))}
                                                                 </div>
                                                             </div>
@@ -2433,7 +2431,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2471,25 +2469,28 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 flex justify-center items-center pointer-events-none" style={{ width: '100%', height: '100%' }}>
                                                             <div className="pointer-events-auto grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
-                                                                {['4','5','6','1','2','3','C','N','M'].map((k) => (
+                                                                {['4','5','6','1','2','3','M','N','.'].map((k) => (
                                                                     <button
                                                                         key={`dist-r-${k}`}
                                                                         type="button"
-                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
+                                                                        className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${
                                                                             k === 'M'
                                                                                 ? (lastDistKeyPressed === 'M'
                                                                                     ? (breastNodulePendingTexts.length > 0
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                : k === 'C'
-                                                                                    ? (lastDistKeyPressed === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                : k === '.'
+                                                                                    ? 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'
                                                                                     : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
-                                                                            // M 鍵：若尺寸/方位/距離未完整，不反白也不觸發任何動作
+                                                                            if (k === '.') {
+                                                                                applyBreastNoduleKeypad('.');
+                                                                                return;
+                                                                            }
                                                                             if (k === 'M') {
                                                                                 const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
                                                                                 const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
@@ -2499,12 +2500,6 @@ export function App() {
                                                                                 }
                                                                             }
                                                                             setLastDistKeyPressed(k);
-                                                                            if (k === 'C') {
-                                                                                setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
-                                                                                setBreastNodulePendingTexts([]);
-                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
-                                                                                return;
-                                                                            }
                                                                             if (breastNoduleGroupParams.clock == null) { return; }
                                                                             const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
                                                                             const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
@@ -2547,7 +2542,7 @@ export function App() {
                                                                                     activeField: 'sizeW',
                                                                                     reEnterPending: true
                                                                                 }));
-                                                                            } else if (breastNodulePendingTexts.length > 0 && k !== 'C') {
+                                                                            } else if (breastNodulePendingTexts.length > 0 && k !== '.') {
                                                                                 const allNodules = [...breastNodulePendingTexts, { w, h, clock: c }];
                                                                                 const allLines = generateNoduleTexts(allNodules, dist);
                                                                                 textToCopy = allLines.join('\n');
@@ -2565,7 +2560,7 @@ export function App() {
                                                                             }
                                                                             setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                         }}
-                                                                    >{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <ListIcon size={12} /> : k}</button>
+                                                                    >{k === 'M' ? '+' : k}</button>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -2588,12 +2583,12 @@ export function App() {
                                                 </div>
                                                 <div className="relative mx-auto" style={{ maxWidth: '200px', aspectRatio: '480/374' }}>
                                                     <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
-                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '5% 9% 2% 9%' }}>
+                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5% 4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
                                                                 <div className="grid grid-cols-3 gap-0.5">
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                        <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
+                                                                        <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium leading-none hover:bg-slate-100 flex items-center justify-center shrink-0">{k === 'C' ? <EraserIcon size={12} /> : k}</button>
                                                                     ))}
                                                                 </div>
                                                             </div>
