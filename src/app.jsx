@@ -68,6 +68,17 @@ function ListIcon({ size = 12, className = '' }) {
     );
 }
 
+// 甲狀腺外框 SVG（來自 file.svg，僅線條可編輯）
+const THYROID_VIEWBOX = '274 208 480 374';
+const THYROID_PATH = 'M653.985840,220.653915 C682.355042,221.259750 702.516235,235.096466 716.516663,258.188324 C731.378601,282.701080 737.488220,310.169281 741.339417,338.227936 C743.129395,351.268951 744.282715,364.420319 744.050293,377.523651 C743.220581,424.298248 734.972473,469.836731 718.948303,513.812622 C713.287292,529.348450 704.536072,543.051575 690.576843,552.813965 C663.135498,572.005005 631.689941,568.548828 607.770386,543.993835 C598.325378,534.297913 590.353699,523.383179 581.222839,513.443542 C565.103210,495.896118 545.780151,484.204102 521.787476,481.688751 C504.628082,479.889832 488.345947,483.563354 473.097137,491.712677 C457.760864,499.908752 446.319122,512.340210 435.636444,525.690063 C427.520203,535.832764 419.054443,545.575012 408.423035,553.397583 C380.635101,573.843811 347.180389,565.213440 327.228668,544.606995 C314.326721,531.281616 307.743164,514.555420 302.527557,497.199921 C293.984192,468.770508 287.623047,439.836212 284.999756,410.262787 C281.532898,371.179443 283.308044,332.403168 294.990234,294.579224 C300.327026,277.300201 306.930725,260.516205 319.011230,246.690872 C337.451935,225.586731 360.659576,216.587555 388.395050,222.136902 C403.624603,225.184021 414.139862,235.567245 422.353241,248.274857 C430.511230,260.896698 436.039917,274.940338 443.475708,287.945129 C453.103760,304.784119 464.601135,320.069031 482.654663,328.784668 C513.202637,343.532166 546.837585,335.500275 569.474915,308.543793 C579.551392,296.544739 586.604980,282.781555 593.444763,268.872040 C598.156616,259.289886 603.006958,249.826202 609.697510,241.407425 C620.917786,227.288757 635.341125,220.064529 653.985840,220.653915 M723.645691,472.260681 C724.848877,466.568848 725.944458,460.851776 727.274109,455.189636 C732.657104,432.266602 735.359131,409.029175 735.876160,385.500122 C736.220642,369.821777 735.647461,354.190430 733.637146,338.648712 C730.392822,313.567383 724.582275,289.134766 712.483826,266.709717 C701.499023,246.348953 685.440552,232.167953 661.681763,228.816650 C645.086365,226.475769 630.291687,230.033325 618.562683,243.001877 C610.619263,251.784882 605.380615,262.167114 600.268188,272.649658 C591.695374,290.227234 582.210510,307.109619 567.978333,320.979004 C536.984924,351.182465 489.585114,351.208679 458.823578,320.870880 C448.625732,310.813507 440.699127,299.169373 434.031342,286.591553 C427.718964,274.684174 422.426331,262.253113 414.889771,250.974472 C400.906830,230.048645 382.073303,224.515549 358.807343,230.140366 C337.851685,235.206635 323.713531,249.133774 314.152924,267.954315 C302.090393,291.699982 296.102325,317.125061 293.116638,343.472198 C290.287994,368.433868 290.729340,393.352142 293.512573,418.194153 C296.854279,448.020660 303.817108,477.135437 313.415649,505.561493 C318.037415,519.248840 324.806732,531.864075 335.586029,541.865967 C354.215546,559.151855 383.686066,563.243774 405.141968,546.268555 C412.256470,540.639709 418.527863,534.250183 424.280975,527.340820 C433.869995,515.824585 442.948883,503.876984 454.892395,494.543762 C477.730804,476.696686 503.342255,470.047455 531.830078,475.707367 C556.277527,480.564636 575.210815,494.472626 591.157593,513.003723 C600.811523,524.222168 609.358215,536.479309 621.297241,545.568970 C639.640320,559.534363 661.207642,560.892639 681.143616,549.492432 C696.236877,540.861572 705.154785,527.262939 711.505188,511.669617 C716.600159,499.158936 720.046814,486.111725 723.645691,472.260681 z';
+function ThyroidOutline({ className = '', strokeWidth = 0.45, stroke = '#334155' }) {
+    return (
+        <svg viewBox={THYROID_VIEWBOX} className={className} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinejoin="round" preserveAspectRatio="xMidYMid meet" aria-label="甲狀腺">
+            <path d={THYROID_PATH} />
+        </svg>
+    );
+}
+
 // --- TemplateButton：定義在模組層級以確保 Preact 有穩定的元件引用 ---
 function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }) {
     const {
@@ -2213,11 +2224,11 @@ export function App() {
                                                 </div>
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
-                                            <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
-                                                <div className="flex justify-between px-2 mb-1">
+                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5">
+                                                <div className="mx-auto flex justify-around items-end px-[1%]" style={{ maxWidth: '200px' }}>
                                                     {['right', 'left'].map(lobeSide => (
-                                                        <div key={lobeSide} className="text-center">
-                                                            <p className="text-[10px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
+                                                        <div key={lobeSide} className="flex flex-col items-center">
+                                                            <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
                                                             <div className="flex items-center justify-center gap-0.5">
                                                                 <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
                                                                 <span className="text-slate-400 text-xs">×</span>
@@ -2226,35 +2237,14 @@ export function App() {
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="relative mx-auto" style={{ maxWidth: '280px', aspectRatio: '300/240' }}>
-                                                    <svg viewBox="0 0 300 240" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
-                                                        <path d="M 150 48 C 132 24, 96 10, 62 26 C 28 42, 12 82, 12 125 C 12 170, 28 205, 65 222 C 88 232, 112 230, 132 218 C 142 212, 147 202, 150 188 C 153 202, 158 212, 168 218 C 188 230, 212 232, 235 222 C 272 205, 288 170, 288 125 C 288 82, 272 42, 238 26 C 204 10, 168 24, 150 48 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
-                                                        <path d="M 126 222 C 126 234, 134 244, 150 248 C 166 244, 174 234, 174 222" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
-                                                    </svg>
-                                                    <div className="absolute inset-0 flex justify-between items-center" style={{ padding: '12% 6% 18% 6%' }}>
+                                                <div className="relative mx-auto" style={{ maxWidth: '200px', aspectRatio: '480/374' }}>
+                                                    <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
+                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '5% 9% 2% 9%' }}>
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
                                                                 <div className="grid grid-cols-3 gap-0.5">
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
-                                                                    ))}
-                                                                </div>
-                                                                <div className="flex gap-1 mt-0.5">
-                                                                    {['N','M'].map((k) => (
-                                                                        <button key={`thy-l-${lobeSide}-act-${k}`} type="button"
-                                                                            className={`w-7 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
-                                                                                k === 'M'
-                                                                                    ? (thyroidLastKeyPressed[lobeSide] === 'M'
-                                                                                        ? ((thyroidNodulePendingTexts[lobeSide] || []).length > 0
-                                                                                            ? 'bg-blue-500 border-blue-600 text-white'
-                                                                                            : 'bg-red-500 border-red-600 text-white')
-                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                    : (thyroidLastKeyPressed[lobeSide] === 'N'
-                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
-                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                            }`}
-                                                                            onClick={() => handleThyroidAction(lobeSide, k)}
-                                                                        >{k}</button>
+                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-4 h-4 rounded bg-white/90 border border-slate-200 text-slate-700 text-[8px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
                                                                     ))}
                                                                 </div>
                                                             </div>
@@ -2583,11 +2573,11 @@ export function App() {
                                                 </div>
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
-                                            <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
-                                                <div className="flex justify-between px-2 mb-1">
+                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5">
+                                                <div className="mx-auto flex justify-around items-end px-[1%]" style={{ maxWidth: '200px' }}>
                                                     {['right', 'left'].map(lobeSide => (
-                                                        <div key={lobeSide} className="text-center">
-                                                            <p className="text-[10px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
+                                                        <div key={lobeSide} className="flex flex-col items-center">
+                                                            <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
                                                             <div className="flex items-center justify-center gap-0.5">
                                                                 <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
                                                                 <span className="text-slate-400 text-xs">×</span>
@@ -2596,35 +2586,14 @@ export function App() {
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="relative mx-auto" style={{ maxWidth: '280px', aspectRatio: '300/240' }}>
-                                                    <svg viewBox="0 0 300 240" className="w-full h-full absolute inset-0 pointer-events-none" preserveAspectRatio="xMidYMid meet">
-                                                        <path d="M 150 48 C 132 24, 96 10, 62 26 C 28 42, 12 82, 12 125 C 12 170, 28 205, 65 222 C 88 232, 112 230, 132 218 C 142 212, 147 202, 150 188 C 153 202, 158 212, 168 218 C 188 230, 212 232, 235 222 C 272 205, 288 170, 288 125 C 288 82, 272 42, 238 26 C 204 10, 168 24, 150 48 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
-                                                        <path d="M 126 222 C 126 234, 134 244, 150 248 C 166 244, 174 234, 174 222" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2.5" strokeLinejoin="round" />
-                                                    </svg>
-                                                    <div className="absolute inset-0 flex justify-between items-center" style={{ padding: '12% 6% 18% 6%' }}>
+                                                <div className="relative mx-auto" style={{ maxWidth: '200px', aspectRatio: '480/374' }}>
+                                                    <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
+                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '5% 9% 2% 9%' }}>
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
                                                                 <div className="grid grid-cols-3 gap-0.5">
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
                                                                         <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium hover:bg-slate-100 flex items-center justify-center shrink-0">{k}</button>
-                                                                    ))}
-                                                                </div>
-                                                                <div className="flex gap-1 mt-0.5">
-                                                                    {['N','M'].map((k) => (
-                                                                        <button key={`thy-r-${lobeSide}-act-${k}`} type="button"
-                                                                            className={`w-7 h-5 rounded border text-[10px] font-medium flex items-center justify-center shadow-sm ${
-                                                                                k === 'M'
-                                                                                    ? (thyroidLastKeyPressed[lobeSide] === 'M'
-                                                                                        ? ((thyroidNodulePendingTexts[lobeSide] || []).length > 0
-                                                                                            ? 'bg-blue-500 border-blue-600 text-white'
-                                                                                            : 'bg-red-500 border-red-600 text-white')
-                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                                    : (thyroidLastKeyPressed[lobeSide] === 'N'
-                                                                                        ? 'bg-blue-500 border-blue-600 text-white'
-                                                                                        : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
-                                                                            }`}
-                                                                            onClick={() => handleThyroidAction(lobeSide, k)}
-                                                                        >{k}</button>
                                                                     ))}
                                                                 </div>
                                                             </div>
