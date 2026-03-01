@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>甲狀腺造型選項</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; background: #f1f5f9; }
+    h1 { font-size: 1.25rem; color: #334155; margin-bottom: 8px; }
+    p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+    .card {
+      background: white; border-radius: 12px; padding: 16px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08); border: 2px solid #e2e8f0;
+    }
+    .card:hover { border-color: #94a3b8; }
+    .card h3 { font-size: 13px; color: #334155; margin: 12px 0 4px; font-weight: 600; }
+    .card .desc { font-size: 11px; color: #64748b; }
+    .icon-wrap {
+      width: 100%; max-width: 200px; aspect-ratio: 300/240; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      background: #f8fafc; border-radius: 10px; color: #475569;
+    }
+    .icon-wrap svg { width: 100%; height: 100%; object-fit: contain; }
+  </style>
+</head>
+<body>
+  <h1>甲狀腺造型選項（蝴蝶形）</h1>
+  <p>以下為可替換「甲狀腺結節描述」組套中甲狀腺圖示的造型。告訴我編號（TH1～TH6）即可幫你改。</p>
+
+  <div class="grid">
+    <!-- TH1：目前使用款（填色蝴蝶） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 48 C 132 24, 96 10, 62 26 C 28 42, 12 82, 12 125 C 12 170, 28 205, 65 222 C 88 232, 112 230, 132 218 C 142 212, 147 202, 150 188 C 153 202, 158 212, 168 218 C 188 230, 212 232, 235 222 C 272 205, 288 170, 288 125 C 288 82, 272 42, 238 26 C 204 10, 168 24, 150 48 Z" />
+          <path d="M 126 222 C 126 234, 134 244, 150 248 C 166 244, 174 234, 174 222" />
+        </svg>
+      </div>
+      <h3>TH1</h3>
+      <p class="desc">目前使用：填色蝴蝶＋峽部</p>
+    </div>
+
+    <!-- TH2：僅線條（無填色） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 48 C 132 24, 96 10, 62 26 C 28 42, 12 82, 12 125 C 12 170, 28 205, 65 222 C 88 232, 112 230, 132 218 C 142 212, 147 202, 150 188 C 153 202, 158 212, 168 218 C 188 230, 212 232, 235 222 C 272 205, 288 170, 288 125 C 288 82, 272 42, 238 26 C 204 10, 168 24, 150 48 Z" />
+          <path d="M 126 222 C 126 234, 134 244, 150 248 C 166 244, 174 234, 174 222" />
+        </svg>
+      </div>
+      <h3>TH2</h3>
+      <p class="desc">線條版（無填色）</p>
+    </div>
+
+    <!-- TH3：較圓潤的兩葉＋峽部 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="90" cy="120" rx="52" ry="65" />
+          <ellipse cx="210" cy="120" rx="52" ry="65" />
+          <path d="M 138 185 Q 150 200 162 185" fill="none" stroke="#94a3b8" stroke-width="2" />
+        </svg>
+      </div>
+      <h3>TH3</h3>
+      <p class="desc">雙橢圓＋弧形峽部</p>
+    </div>
+
+    <!-- TH4：線條版雙橢圓 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="90" cy="120" rx="52" ry="65" />
+          <ellipse cx="210" cy="120" rx="52" ry="65" />
+          <path d="M 138 185 Q 150 200 162 185" />
+        </svg>
+      </div>
+      <h3>TH4</h3>
+      <p class="desc">線條版雙橢圓＋峽部</p>
+    </div>
+
+    <!-- TH5：較扁寬的蝴蝶 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 55 C 118 28, 68 18, 38 45 C 8 72, 5 125, 35 175 C 58 210, 100 228, 150 218 C 200 228, 242 210, 265 175 C 295 125, 292 72, 262 45 C 232 18, 182 28, 150 55 Z" />
+          <path d="M 128 218 Q 150 235 172 218" fill="none" stroke="#94a3b8" stroke-width="2.5" />
+        </svg>
+      </div>
+      <h3>TH5</h3>
+      <p class="desc">扁寬蝴蝶＋峽部</p>
+    </div>
+
+    <!-- TH6：簡化對稱（兩葉一體線條） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M150 45 C100 20 50 50 50 115 C50 175 95 215 150 195 C205 215 250 175 250 115 C250 50 200 20 150 45 Z" />
+          <path d="M125 195 C125 212 150 228 150 228 C150 228 175 212 175 195" />
+        </svg>
+      </div>
+      <h3>TH6</h3>
+      <p class="desc">簡化對稱蝴蝶線條</p>
+    </div>
+
+    <!-- TH7：雙葉＋橫條峽部（最簡） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="85" cy="110" rx="55" ry="70" />
+          <ellipse cx="215" cy="110" rx="55" ry="70" />
+          <rect x="130" y="175" width="40" height="18" rx="4" />
+        </svg>
+      </div>
+      <h3>TH7</h3>
+      <p class="desc">雙葉＋橫條峽部</p>
+    </div>
+
+    <!-- TH8：線條版 TH7 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="85" cy="110" rx="55" ry="70" />
+          <ellipse cx="215" cy="110" rx="55" ry="70" />
+          <rect x="130" y="175" width="40" height="18" rx="4" />
+        </svg>
+      </div>
+      <h3>TH8</h3>
+      <p class="desc">線條版雙葉＋橫條</p>
+    </div>
+  </div>
+
+  <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;" />
+  <h2 style="font-size: 1rem; color: #334155; margin-bottom: 8px;">T4 標準（線條版）－10 種造型</h2>
+  <p>以下皆為線條版（無填色），可擇一替換。告訴我編號（T4-V1～T4-V10）即可。</p>
+
+  <div class="grid">
+    <!-- T4-V1：兩半橢圓正中相接 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 48 A 50 72 0 0 1 150 192 A 50 72 0 0 1 150 48 Z" />
+        </svg>
+      </div>
+      <h3>T4-V1</h3>
+      <p class="desc">兩半橢圓正中相接</p>
+    </div>
+    <!-- T4-V2：較窄的兩半橢圓 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 40 A 38 80 0 0 1 150 200 A 38 80 0 0 1 150 40 Z" />
+        </svg>
+      </div>
+      <h3>T4-V2</h3>
+      <p class="desc">較窄兩半橢圓</p>
+    </div>
+    <!-- T4-V3：較扁的兩半橢圓 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 55 A 58 55 0 0 1 150 185 A 58 55 0 0 1 150 55 Z" />
+        </svg>
+      </div>
+      <h3>T4-V3</h3>
+      <p class="desc">較扁兩半橢圓</p>
+    </div>
+    <!-- T4-V4：雙橢圓相切（無峽部） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="100" cy="120" rx="50" ry="68" />
+          <ellipse cx="200" cy="120" rx="50" ry="68" />
+        </svg>
+      </div>
+      <h3>T4-V4</h3>
+      <p class="desc">雙橢圓相切</p>
+    </div>
+    <!-- T4-V5：雙橢圓微疊 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="108" cy="120" rx="52" ry="70" />
+          <ellipse cx="192" cy="120" rx="52" ry="70" />
+        </svg>
+      </div>
+      <h3>T4-V5</h3>
+      <p class="desc">雙橢圓微疊</p>
+    </div>
+    <!-- T4-V6：貝茲蝴蝶一體線條 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M150 42 C95 42 52 85 52 120 C52 155 95 198 150 198 C205 198 248 155 248 120 C248 85 205 42 150 42 Z" />
+        </svg>
+      </div>
+      <h3>T4-V6</h3>
+      <p class="desc">貝茲蝴蝶一體</p>
+    </div>
+    <!-- T4-V7：膠囊形 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 112 60 A 38 60 0 0 0 112 180 L 188 180 A 38 60 0 0 0 188 60 Z" />
+        </svg>
+      </div>
+      <h3>T4-V7</h3>
+      <p class="desc">膠囊形</p>
+    </div>
+    <!-- T4-V8：圓潤八字（雙曲線） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 32 C 80 32 50 120 50 120 C 50 120 80 208 150 208 C 220 208 250 120 250 120 C 250 120 220 32 150 32 Z" />
+        </svg>
+      </div>
+      <h3>T4-V8</h3>
+      <p class="desc">圓潤八字</p>
+    </div>
+    <!-- T4-V9：大橢圓兩半（較寬） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 35 A 65 85 0 0 1 150 205 A 65 85 0 0 1 150 35 Z" />
+        </svg>
+      </div>
+      <h3>T4-V9</h3>
+      <p class="desc">較寬兩半橢圓</p>
+    </div>
+    <!-- T4-V10：雙橢圓略分離（無峽部） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round">
+          <ellipse cx="92" cy="120" rx="48" ry="68" />
+          <ellipse cx="208" cy="120" rx="48" ry="68" />
+        </svg>
+      </div>
+      <h3>T4-V10</h3>
+      <p class="desc">雙橢圓略分離</p>
+    </div>
+  </div>
+
+  <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;" />
+  <h2 style="font-size: 1rem; color: #334155; margin-bottom: 8px;">T4-V10 改（雙葉對稱＋中間峽部）－5 種</h2>
+  <p>以 T4-V10 為基礎：雙葉對稱、中間加入峽部連接。線條版，擇一替換。告訴我編號（W1～W5）即可。</p>
+
+  <div class="grid">
+    <!-- W1：標準峽部（約 20px） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 92 52 A 48 68 0 0 1 140 120 A 48 68 0 0 1 92 188 L 140 188 L 160 188 A 48 68 0 0 1 208 120 A 48 68 0 0 1 160 52 L 140 52 Z" />
+        </svg>
+      </div>
+      <h3>W1</h3>
+      <p class="desc">標準峽部</p>
+    </div>
+    <!-- W2：峽部較窄 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 92 52 A 52 68 0 0 1 144 120 A 52 68 0 0 1 92 188 L 144 188 L 156 188 A 52 68 0 0 1 208 120 A 52 68 0 0 1 156 52 L 144 52 Z" />
+        </svg>
+      </div>
+      <h3>W2</h3>
+      <p class="desc">峽部較窄</p>
+    </div>
+    <!-- W3：峽部較寬 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 82 52 A 50 68 0 0 1 132 120 A 50 68 0 0 1 82 188 L 132 188 L 168 188 A 50 68 0 0 1 218 120 A 50 68 0 0 1 168 52 L 132 52 Z" />
+        </svg>
+      </div>
+      <h3>W3</h3>
+      <p class="desc">峽部較寬</p>
+    </div>
+    <!-- W4：葉較圓（ry 加大） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 92 48 A 48 72 0 0 1 140 120 A 48 72 0 0 1 92 192 L 140 192 L 160 192 A 48 72 0 0 1 208 120 A 48 72 0 0 1 160 48 L 140 48 Z" />
+        </svg>
+      </div>
+      <h3>W4</h3>
+      <p class="desc">葉較圓</p>
+    </div>
+    <!-- W5：峽部圓角 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 92 52 A 48 68 0 0 1 140 120 A 48 68 0 0 1 92 188 Q 150 192 160 188 A 48 68 0 0 1 208 120 A 48 68 0 0 1 160 52 Q 150 48 140 52 Z" />
+        </svg>
+      </div>
+      <h3>W5</h3>
+      <p class="desc">峽部圓角</p>
+    </div>
+  </div>
+
+  <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;" />
+  <h2 style="font-size: 1rem; color: #334155; margin-bottom: 8px;">手繪風格（雙葉＋峽部＋底緣凹口）－5 種</h2>
+  <p>參考手繪：雙葉圓潤、中間峽部較窄、底部中央上彎弧線（凹口）。線條版，擇一替換。告訴我編號（H1～H5）即可。</p>
+
+  <div class="grid">
+    <!-- H1：標準手繪型（雙葉＋峽部＋底凹口） -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 50 C 100 50 65 95 72 145 C 78 185 92 208 98 210 C 122 218 150 198 150 198 C 178 218 202 210 208 210 C 222 185 228 145 228 95 C 235 50 200 50 150 50 Z" />
+        </svg>
+      </div>
+      <h3>H1</h3>
+      <p class="desc">雙葉＋峽部＋底凹口</p>
+    </div>
+    <!-- H2：底凹口較深 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 48 C 98 48 62 92 70 142 C 76 182 90 212 98 215 C 124 228 150 188 150 188 C 176 228 202 215 210 215 C 224 182 230 142 230 92 C 238 48 202 48 150 48 Z" />
+        </svg>
+      </div>
+      <h3>H2</h3>
+      <p class="desc">底凹口較深</p>
+    </div>
+    <!-- H3：峽部較寬、葉較圓 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 58 C 108 58 78 100 82 142 C 86 178 98 205 108 208 C 132 215 150 200 150 200 C 168 215 192 208 202 208 C 214 178 218 142 218 100 C 222 58 192 58 150 58 Z" />
+        </svg>
+      </div>
+      <h3>H3</h3>
+      <p class="desc">峽部較寬、葉較圓</p>
+    </div>
+    <!-- H4：略扁、底凹口柔和 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 55 C 105 55 72 98 78 138 C 82 172 94 198 102 202 C 124 208 150 195 150 195 C 176 208 198 202 206 202 C 218 172 222 138 222 98 C 228 55 195 55 150 55 Z" />
+        </svg>
+      </div>
+      <h3>H4</h3>
+      <p class="desc">略扁、底凹口柔和</p>
+    </div>
+    <!-- H5：葉較修長、凹口明顯 -->
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 300 240" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round">
+          <path d="M 150 42 C 95 42 58 92 65 148 C 70 192 85 218 95 222 C 120 232 150 205 150 205 C 180 232 205 222 215 222 C 230 192 235 148 235 92 C 242 42 205 42 150 42 Z" />
+        </svg>
+      </div>
+      <h3>H5</h3>
+      <p class="desc">葉較修長、凹口明顯</p>
+    </div>
+  </div>
+
+  <p style="margin-top: 24px; font-size: 12px;">開啟 <code>http://localhost:8080/thyroid-shapes.html</code> 預覽。TH1～TH8、T4-V1～V10、W1～W5（V10＋峽部）或 H1～H5 告訴我編號即可替換。</p>
+</body>
+</html>

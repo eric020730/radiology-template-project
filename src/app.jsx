@@ -432,6 +432,10 @@ export function App() {
     const copiedTimerRef = useRef(null); // 控制組套複製後高亮時間，確保最後一次點擊維持完整 1 秒
     const leftGroupsContainerRef = useRef(null);  // 左側分組容器 ref
     const rightGroupsContainerRef = useRef(null); // 右側分組容器 ref
+    const thyroidNoduleParamsRef = useRef(thyroidNoduleParams);
+    thyroidNoduleParamsRef.current = thyroidNoduleParams;
+    const thyroidNodulePendingRef = useRef(thyroidNodulePending);
+    thyroidNodulePendingRef.current = thyroidNodulePending;
     const tabEditAreaRef = useRef(null);          // 當前頁籤標題與操作區域 ref
     const tabScrollRef = useRef(null);            // 頁籤欄左右滑動容器 ref
     
@@ -1354,19 +1358,27 @@ export function App() {
             return;
         }
         if (key === 'C') {
+            thyroidNodulePendingRef.current = [];
             setThyroidNodulePending([]);
             setThyroidNoduleSizeKeyHighlight(lobeSide);
             setTimeout(() => setThyroidNoduleSizeKeyHighlight(null), 1000);
+            // 同時清除剪貼簿中剛複製的結節句子
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText('').catch(() => {});
+            }
         }
         setThyroidNoduleParams(prev => {
             const p = prev[lobeSide];
             const { activeField, sizeWStr, sizeHStr } = p;
+            // 若本側已完成有效尺寸（長×寬皆>0），須先按 + 才能輸入下一顆，否則封鎖數字輸入
+            const w = parseSizeValue(p.sizeWStr);
+            const h = parseSizeValue(p.sizeHStr);
+            if (w > 0 && h > 0 && (key === '.' || /^[0-9]$/.test(key))) return prev;
             let updated;
             if (key === 'C') {
-                return {
-                    right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false },
-                    left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }
-                };
+                const cleared = { right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }, left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false } };
+                thyroidNoduleParamsRef.current = cleared;
+                return cleared;
             } else if (activeField === null) {
                 if (key === '.') return prev;
                 updated = { ...p, sizeWStr: key, activeField: 'sizeW', reEnterPending: false };
@@ -1402,14 +1414,37 @@ export function App() {
                 return prev;
             }
             const nextState = { ...prev, [lobeSide]: updated || p };
-            const newP = nextState[lobeSide];
+            thyroidNoduleParamsRef.current = nextState; // 即時同步 ref，確保 + 能讀到剛輸入的值
             if (key !== 'C' && key !== '.') {
-                const w = parseSizeValue(newP.sizeWStr);
-                const h = parseSizeValue(newP.sizeHStr);
-                if (w > 0 && h > 0) copyThyroidNoduleOutput(lobeSide, newP.sizeWStr, newP.sizeHStr);
+                const newP = nextState[lobeSide];
+                const completingW = parseSizeValue(newP.sizeWStr);
+                const completingH = parseSizeValue(newP.sizeHStr);
+                if (completingW > 0 && completingH > 0) {
+                    const pending = thyroidNodulePendingRef.current;
+                    const nodesToOutput = [...pending, { w: completingW, h: completingH, side: lobeSide }];
+                    outputThyroidFromNodes(nodesToOutput); // 輸入完成時立即複製，不需再按 +
+                }
             }
             return nextState;
         });
+    };
+
+    const outputThyroidFromNodes = (nodes) => {
+        if (!nodes || nodes.length === 0) return;
+        const bySide = { right: nodes.filter(n => n.side === 'right').map(n => ({ w: n.w, h: n.h })), left: nodes.filter(n => n.side === 'left').map(n => ({ w: n.w, h: n.h })) };
+        const outputLines = [];
+        for (const side of ['right', 'left']) {
+            const nodules = bySide[side];
+            if (nodules.length === 0) continue;
+            const line = nodules.length === 1
+                ? thyroidNoduleSentenceTemplate.split('{W}').join(String(nodules[0].w)).split('{H}').join(String(nodules[0].h)).split('{SIDE}').join(side)
+                : thyroidNoduleMergedTemplate.split('{SIZES}').join(nodules.map(n => `${n.w}x${n.h}cm`).join(', ')).split('{SIDE}').join(side);
+            outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
+        }
+        if (outputLines.length === 0) return;
+        const finalText = outputLines.map(l => `   - ${l.replace(/^\s*-\s*/, '')}`).join('\n');
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(finalText).catch(() => {});
+        else { const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
     };
 
     const copyThyroidNoduleOutput = (completingLobeSide, sizeWStr, sizeHStr) => {
@@ -1417,6 +1452,7 @@ export function App() {
         const completingH = parseSizeValue(sizeHStr);
         if (completingW === 0 || completingH === 0) return;
         const outputLines = [];
+        const newPending = []; // 累積本次輸出的結節，供後續繼續追加
         const bySide = { right: thyroidNodulePending.filter(p => p.side === 'right').map(p => ({ w: p.w, h: p.h })), left: thyroidNodulePending.filter(p => p.side === 'left').map(p => ({ w: p.w, h: p.h })) };
         for (const side of ['right', 'left']) {
             const pending = bySide[side];
@@ -1433,6 +1469,7 @@ export function App() {
                 continue;
             }
             if (nodules.length === 0) continue;
+            for (const n of nodules) newPending.push({ w: n.w, h: n.h, side });
             let line;
             if (nodules.length === 1) {
                 line = thyroidNoduleSentenceTemplate
@@ -1448,7 +1485,11 @@ export function App() {
             outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
         }
         if (outputLines.length === 0) return;
-        setThyroidNodulePending([]);
+        setThyroidNodulePending(newPending);
+        setThyroidNoduleParams({
+            right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false },
+            left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }
+        });
         const finalText = outputLines.map(line => {
             const core = line.replace(/^\s*-\s*/, '');
             return `   - ${core}`;
@@ -1476,10 +1517,11 @@ export function App() {
         const w = parseSizeValue(p.sizeWStr);
         const h = parseSizeValue(p.sizeHStr);
         if (key === 'M') {
-            const rightP = thyroidNoduleParams.right;
+            const params = thyroidNoduleParamsRef.current; // 使用 ref 避免閉包取到舊 state
+            const rightP = params.right;
             const rightW = parseSizeValue(rightP.sizeWStr);
             const rightH = parseSizeValue(rightP.sizeHStr);
-            const leftP = thyroidNoduleParams.left;
+            const leftP = params.left;
             const leftW = parseSizeValue(leftP.sizeWStr);
             const leftH = parseSizeValue(leftP.sizeHStr);
             const rightValid = rightW > 0 && rightH > 0;
@@ -1490,11 +1532,15 @@ export function App() {
             const toAdd = [];
             if (rightValid) toAdd.push({ w: rightW, h: rightH, side: 'right' });
             if (leftValid) toAdd.push({ w: leftW, h: leftH, side: 'left' });
-            setThyroidNodulePending(prev => [...prev, ...toAdd]);
-            setThyroidNoduleParams({
-                right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false },
-                left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }
+            const clearedParams = { right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }, left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false } };
+            thyroidNoduleParamsRef.current = clearedParams; // 即時同步，下一顆輸入時 ref 正確
+            setThyroidNodulePending(prev => {
+                const next = [...prev, ...toAdd];
+                thyroidNodulePendingRef.current = next; // 即時同步 ref
+                outputThyroidFromNodes(next); // 使用最新累積結果複製，避免閉包取到舊 state
+                return next;
             });
+            setThyroidNoduleParams(clearedParams);
             return;
         }
 
