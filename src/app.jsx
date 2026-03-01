@@ -2225,20 +2225,8 @@ export function App() {
                                                 </div>
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
-                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5">
-                                                <div className="mx-auto flex justify-around items-end px-[1%]" style={{ maxWidth: '200px' }}>
-                                                    {['right', 'left'].map(lobeSide => (
-                                                        <div key={lobeSide} className="flex flex-col items-center">
-                                                            <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
-                                                            <div className="flex items-center justify-center gap-0.5">
-                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
-                                                                <span className="text-slate-400 text-xs">×</span>
-                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="relative mx-auto" style={{ maxWidth: '200px', aspectRatio: '480/374' }}>
+                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5 flex flex-row items-start gap-3">
+                                                <div className="relative flex-shrink-0 ml-4" style={{ width: '200px', aspectRatio: '480/374' }}>
                                                     <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
                                                     <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5% 4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
@@ -2247,6 +2235,20 @@ export function App() {
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
                                                                         <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? (lobeSide === 'right' ? <EraserIcon size={12} /> : <span style={{display:'inline-block',transform:'translate(0.5px, -1px)'}}>+</span>) : k}</span></button>
                                                                     ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col gap-2 items-start pl-1.5">
+                                                    <div className="flex gap-4">
+                                                        {['right', 'left'].map(lobeSide => (
+                                                            <div key={lobeSide} className="flex flex-col items-center gap-0.5">
+                                                                <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
+                                                                <div className="flex items-center justify-center gap-0.5">
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
+                                                                    <span className="text-slate-400 text-xs">×</span>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -2571,20 +2573,8 @@ export function App() {
                                                 </div>
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
-                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5">
-                                                <div className="mx-auto flex justify-around items-end px-[1%]" style={{ maxWidth: '200px' }}>
-                                                    {['right', 'left'].map(lobeSide => (
-                                                        <div key={lobeSide} className="flex flex-col items-center">
-                                                            <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
-                                                            <div className="flex items-center justify-center gap-0.5">
-                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
-                                                                <span className="text-slate-400 text-xs">×</span>
-                                                                <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="relative mx-auto" style={{ maxWidth: '200px', aspectRatio: '480/374' }}>
+                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5 flex flex-row items-start gap-3">
+                                                <div className="relative flex-shrink-0 ml-4" style={{ width: '200px', aspectRatio: '480/374' }}>
                                                     <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
                                                     <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5% 4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
@@ -2593,6 +2583,20 @@ export function App() {
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
                                                                         <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? (lobeSide === 'right' ? <EraserIcon size={12} /> : <span style={{display:'inline-block',transform:'translate(0.5px, -1px)'}}>+</span>) : k}</span></button>
                                                                     ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col gap-2 items-start pl-1.5">
+                                                    <div className="flex gap-4">
+                                                        {['right', 'left'].map(lobeSide => (
+                                                            <div key={lobeSide} className="flex flex-col items-center gap-0.5">
+                                                                <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
+                                                                <div className="flex items-center justify-center gap-0.5">
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
+                                                                    <span className="text-slate-400 text-xs">×</span>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
                                                                 </div>
                                                             </div>
                                                         ))}
