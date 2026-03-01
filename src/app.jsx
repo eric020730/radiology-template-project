@@ -1248,18 +1248,19 @@ export function App() {
         setEditingGroupName({ groupId: newGroup.id, side });
     };
 
-    const formatSizeDisplay = (str, placeholder) => {
+    const formatSizeDisplay = (str, placeholder, forThyroid = false) => {
         if (!str) return placeholder;
         if (str === '0') return '0';
         if (str.includes('.')) return str;
-        if (str.length >= 2) return str; // 多位整數（如 10、11）直接顯示
+        if (str.length >= 2) return str;
+        if (forThyroid) return str; // 甲狀腺：第一數字為個位數
         return `0.${str}`;
     };
 
-    const parseSizeValue = (str) => {
+    const parseSizeValue = (str, forThyroid = false) => {
         if (!str) return 0;
         if (str.includes('.')) return parseFloat(str) || 0;
-        if (str.length >= 2) return parseFloat(str) || 0; // 多位整數如 10、11、12
+        if (forThyroid || str.length >= 2) return parseFloat(str) || 0; // 甲狀腺或多位：個位數
         return parseFloat(`0.${str}`) || 0;
     };
 
@@ -1421,14 +1422,14 @@ export function App() {
             thyroidNoduleParamsRef.current = nextState; // 即時同步 ref，確保 + 能讀到剛輸入的值
             if (key !== 'C' && key !== '.') {
                 const newP = nextState[lobeSide];
-                const completingW = parseSizeValue(newP.sizeWStr);
-                const completingH = parseSizeValue(newP.sizeHStr);
+                const completingW = parseSizeValue(newP.sizeWStr, true);
+                const completingH = parseSizeValue(newP.sizeHStr, true);
                 if (completingW > 0 && completingH > 0) {
                     const nodesFromParams = [];
                     for (const s of ['right', 'left']) {
                         const q = nextState[s];
-                        const qw = parseSizeValue(q.sizeWStr);
-                        const qh = parseSizeValue(q.sizeHStr);
+                        const qw = parseSizeValue(q.sizeWStr, true);
+                        const qh = parseSizeValue(q.sizeHStr, true);
                         if (qw > 0 && qh > 0) nodesFromParams.push({ w: qw, h: qh, side: s });
                     }
                     const pending = thyroidNodulePendingRef.current;
@@ -1466,8 +1467,8 @@ export function App() {
     };
 
     const copyThyroidNoduleOutput = (completingLobeSide, sizeWStr, sizeHStr) => {
-        const completingW = parseSizeValue(sizeWStr);
-        const completingH = parseSizeValue(sizeHStr);
+        const completingW = parseSizeValue(sizeWStr, true);
+        const completingH = parseSizeValue(sizeHStr, true);
         if (completingW === 0 || completingH === 0) return;
         const outputLines = [];
         const newPending = []; // 累積本次輸出的結節，供後續繼續追加
@@ -1475,8 +1476,8 @@ export function App() {
         for (const side of ['right', 'left']) {
             const pending = bySide[side];
             const p = thyroidNoduleParams[side];
-            const w = parseSizeValue(p.sizeWStr);
-            const h = parseSizeValue(p.sizeHStr);
+            const w = parseSizeValue(p.sizeWStr, true);
+            const h = parseSizeValue(p.sizeHStr, true);
             const currentNodule = (w > 0 && h > 0) ? { w, h } : null;
             let nodules;
             if (side === completingLobeSide) {
@@ -1519,16 +1520,16 @@ export function App() {
 
     const handleThyroidAction = (lobeSide, key) => {
         const p = thyroidNoduleParams[lobeSide];
-        const w = parseSizeValue(p.sizeWStr);
-        const h = parseSizeValue(p.sizeHStr);
+        const w = parseSizeValue(p.sizeWStr, true);
+        const h = parseSizeValue(p.sizeHStr, true);
         if (key === 'M' || key === 'MR' || key === 'ML') {
             const params = thyroidNoduleParamsRef.current;
             const rightP = params.right;
-            const rightW = parseSizeValue(rightP.sizeWStr);
-            const rightH = parseSizeValue(rightP.sizeHStr);
+            const rightW = parseSizeValue(rightP.sizeWStr, true);
+            const rightH = parseSizeValue(rightP.sizeHStr, true);
             const leftP = params.left;
-            const leftW = parseSizeValue(leftP.sizeWStr);
-            const leftH = parseSizeValue(leftP.sizeHStr);
+            const leftW = parseSizeValue(leftP.sizeWStr, true);
+            const leftH = parseSizeValue(leftP.sizeHStr, true);
             const rightValid = rightW > 0 && rightH > 0;
             const leftValid = leftW > 0 && leftH > 0;
             const pendingRight = thyroidNodulePendingRef.current.filter(p => p.side === 'right');
@@ -2427,9 +2428,9 @@ export function App() {
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
                                                                 <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
                                                                 <div className="flex items-center justify-center gap-0.5">
-                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長', true)}</button>
                                                                     <span className="text-slate-400 text-xs">×</span>
-                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬', true)}</button>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -2808,9 +2809,9 @@ export function App() {
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
                                                                 <p className="text-[11px] font-bold text-slate-500 mb-0.5">{lobeSide === 'right' ? 'Right lobe' : 'Left lobe'}</p>
                                                                 <div className="flex items-center justify-center gap-0.5">
-                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長', true)}</button>
                                                                     <span className="text-slate-400 text-xs">×</span>
-                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬', true)}</button>
                                                                 </div>
                                                             </div>
                                                         ))}
