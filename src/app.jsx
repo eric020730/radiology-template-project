@@ -2423,29 +2423,31 @@ export function App() {
                                                 </div>
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
-                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5 flex flex-row items-start gap-3">
-                                                <div className="relative min-w-0 flex-[1_1_200px] ml-5" style={{ minWidth: '100px', maxWidth: '200px', aspectRatio: '480/374' }}>
-                                                    <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
-                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5%' }}>
-                                                        {['right', 'left'].map(lobeSide => (
-                                                            <div key={lobeSide} className="flex flex-col items-center justify-center" style={{ width: '36%' }}>
-                                                                <div className="grid grid-cols-3 grid-rows-4 gap-[4%] p-[2%] w-full aspect-[3/4]">
-                                                                    {(lobeSide === 'right' ? ['7','8','9','4','5','6','1','2','3','C','0','.'] : ['7','8','9','4','5','6','1','2','3','M','0','.']).map((k) => (
-                                                                        (lobeSide === 'left' && k === 'M' && thyroidShowSplitPlus) ? (
-                                                                            <div key={`thy-l-${lobeSide}-plus`} className="flex items-stretch gap-0 rounded overflow-hidden border border-slate-200 shadow-sm col-span-1 row-span-1 min-w-0 w-full aspect-square">
-                                                                                <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidPlusHighlightLobe === 'right' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
-                                                                                <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidPlusHighlightLobe === 'left' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : k === 'M' && thyroidPlusHighlightLobe === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k}</span></button>
-                                                                        )
-                                                                    ))}
+                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5 grid grid-cols-2 min-h-[140px]">
+                                                <div className="flex items-center justify-center min-w-0">
+                                                    <div className="relative" style={{ width: 'min(200px, 90%)', aspectRatio: '480/374' }}>
+                                                        <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
+                                                        <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5%' }}>
+                                                            {['right', 'left'].map(lobeSide => (
+                                                                <div key={lobeSide} className="flex flex-col items-center justify-center" style={{ width: '36%' }}>
+                                                                    <div className="grid grid-cols-3 grid-rows-4 gap-[4%] p-[2%] w-full aspect-[3/4]">
+                                                                        {(lobeSide === 'right' ? ['7','8','9','4','5','6','1','2','3','C','0','.'] : ['7','8','9','4','5','6','1','2','3','M','0','.']).map((k) => (
+                                                                            (lobeSide === 'left' && k === 'M' && thyroidShowSplitPlus) ? (
+                                                                                <div key={`thy-l-${lobeSide}-plus`} className="flex items-stretch gap-0 rounded overflow-hidden border border-slate-200 shadow-sm col-span-1 row-span-1 min-w-0 w-full aspect-square">
+                                                                                    <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidPlusHighlightLobe === 'right' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                    <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidPlusHighlightLobe === 'left' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : k === 'M' && thyroidPlusHighlightLobe === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k}</span></button>
+                                                                            )
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-1 min-w-0 flex-col gap-2 items-center justify-start pl-1 pt-1 -ml-1.5">
+                                                <div className="flex items-start justify-center min-w-0 pt-1">
                                                     <div className="flex flex-wrap gap-4 justify-center items-center">
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5 min-w-0">
@@ -2804,29 +2806,31 @@ export function App() {
                                                 </div>
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
-                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5 flex flex-row items-start gap-3">
-                                                <div className="relative min-w-0 flex-[1_1_200px] ml-5" style={{ minWidth: '100px', maxWidth: '200px', aspectRatio: '480/374' }}>
-                                                    <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
-                                                    <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5%' }}>
-                                                        {['right', 'left'].map(lobeSide => (
-                                                            <div key={lobeSide} className="flex flex-col items-center justify-center" style={{ width: '36%' }}>
-                                                                <div className="grid grid-cols-3 grid-rows-4 gap-[4%] p-[2%] w-full aspect-[3/4]">
-                                                                    {(lobeSide === 'right' ? ['7','8','9','4','5','6','1','2','3','C','0','.'] : ['7','8','9','4','5','6','1','2','3','M','0','.']).map((k) => (
-                                                                        (lobeSide === 'left' && k === 'M' && thyroidShowSplitPlus) ? (
-                                                                            <div key={`thy-r-${lobeSide}-plus`} className="flex items-stretch gap-0 rounded overflow-hidden border border-slate-200 shadow-sm col-span-1 row-span-1 min-w-0 w-full aspect-square">
-                                                                                <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidPlusHighlightLobe === 'right' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
-                                                                                <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidPlusHighlightLobe === 'left' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : k === 'M' && thyroidPlusHighlightLobe === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k}</span></button>
-                                                                        )
-                                                                    ))}
+                                            <div className="rounded-lg border border-slate-200 bg-white p-0.5 grid grid-cols-2 min-h-[140px]">
+                                                <div className="flex items-center justify-center min-w-0">
+                                                    <div className="relative" style={{ width: 'min(200px, 90%)', aspectRatio: '480/374' }}>
+                                                        <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
+                                                        <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5%' }}>
+                                                            {['right', 'left'].map(lobeSide => (
+                                                                <div key={lobeSide} className="flex flex-col items-center justify-center" style={{ width: '36%' }}>
+                                                                    <div className="grid grid-cols-3 grid-rows-4 gap-[4%] p-[2%] w-full aspect-[3/4]">
+                                                                        {(lobeSide === 'right' ? ['7','8','9','4','5','6','1','2','3','C','0','.'] : ['7','8','9','4','5','6','1','2','3','M','0','.']).map((k) => (
+                                                                            (lobeSide === 'left' && k === 'M' && thyroidShowSplitPlus) ? (
+                                                                                <div key={`thy-r-${lobeSide}-plus`} className="flex items-stretch gap-0 rounded overflow-hidden border border-slate-200 shadow-sm col-span-1 row-span-1 min-w-0 w-full aspect-square">
+                                                                                    <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidPlusHighlightLobe === 'right' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                    <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidPlusHighlightLobe === 'left' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : k === 'M' && thyroidPlusHighlightLobe === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k}</span></button>
+                                                                            )
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-1 min-w-0 flex-col gap-2 items-center justify-start pl-1 pt-1 -ml-1.5">
+                                                <div className="flex items-start justify-center min-w-0 pt-1">
                                                     <div className="flex flex-wrap gap-4 justify-center items-center">
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5 min-w-0">
