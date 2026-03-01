@@ -409,6 +409,7 @@ export function App() {
     const [thyroidNoduleMergedTemplate, setThyroidNoduleMergedTemplate] = useState("Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.");
     const [thyroidNodulePendingTexts, setThyroidNodulePendingTexts] = useState({ right: [], left: [] });
     const [thyroidLastKeyPressed, setThyroidLastKeyPressed] = useState({ right: null, left: null });
+    const [thyroidNoduleSizeKeyHighlight, setThyroidNoduleSizeKeyHighlight] = useState(null);
     const [editingThyroidSentenceTemplate, setEditingThyroidSentenceTemplate] = useState(false);
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
@@ -1349,6 +1350,8 @@ export function App() {
     const applyThyroidNoduleKeypad = (lobeSide, key) => {
         if (key === 'C') {
             setThyroidNodulePendingTexts(prev => ({ ...prev, [lobeSide]: [] }));
+            setThyroidNoduleSizeKeyHighlight('C');
+            setTimeout(() => setThyroidNoduleSizeKeyHighlight(null), 1000);
         }
         setThyroidNoduleParams(prev => {
             const p = prev[lobeSide];
@@ -2069,7 +2072,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none inline-flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k}</span></button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2213,7 +2216,7 @@ export function App() {
                                                                             }
                                                                         }}
                                                                     >
-                                                                        {k === 'M' ? '+' : k}
+                                                                        <span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'M' ? '+' : k}</span>
                                                                     </button>
                                                                 ))}
                                                             </div>
@@ -2240,9 +2243,9 @@ export function App() {
                                                     <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5% 4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
-                                                                <div className="grid grid-cols-3 gap-0.5">
+                                                                <div className="grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium leading-none hover:bg-slate-100 flex items-center justify-center shrink-0">{k === 'C' ? <EraserIcon size={12} /> : k}</button>
+                                                                        <button key={`thy-l-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? (lobeSide === 'right' ? <EraserIcon size={12} /> : <span style={{display:'inline-block',transform:'translate(0.5px, -1px)'}}>+</span>) : k}</span></button>
                                                                     ))}
                                                                 </div>
                                                             </div>
@@ -2431,7 +2434,7 @@ export function App() {
                                                         </svg>
                                                         <div className="relative z-10 grid grid-cols-3 gap-0.5 p-1">
                                                             {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}>{k === 'C' ? <EraserIcon size={12} /> : k}</button>
+                                                                <button key={k} type="button" onClick={() => applyBreastNoduleKeypad(k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none inline-flex items-center justify-center shrink-0 ${k === 'C' && breastNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k}</span></button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -2560,7 +2563,7 @@ export function App() {
                                                                             }
                                                                             setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                         }}
-                                                                    >{k === 'M' ? '+' : k}</button>
+                                                                    ><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'M' ? '+' : k}</span></button>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -2586,9 +2589,9 @@ export function App() {
                                                     <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5% 4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5">
-                                                                <div className="grid grid-cols-3 gap-0.5">
+                                                                <div className="grid grid-cols-3 gap-0.5 p-0.5 max-w-[72px]">
                                                                     {['7','8','9','4','5','6','1','2','3','C','0','.'].map((k) => (
-                                                                        <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className="w-5 h-5 rounded bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-medium leading-none hover:bg-slate-100 flex items-center justify-center shrink-0">{k === 'C' ? <EraserIcon size={12} /> : k}</button>
+                                                                        <button key={`thy-r-${lobeSide}-${k}`} type="button" onClick={() => applyThyroidNoduleKeypad(lobeSide, k)} className={`w-5 h-5 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${k === 'C' && thyroidNoduleSizeKeyHighlight === 'C' ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? (lobeSide === 'right' ? <EraserIcon size={12} /> : <span style={{display:'inline-block',transform:'translate(0.5px, -1px)'}}>+</span>) : k}</span></button>
                                                                     ))}
                                                                 </div>
                                                             </div>
