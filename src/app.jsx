@@ -2445,7 +2445,7 @@ export function App() {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-1 min-w-0 flex-col gap-2 items-center justify-start pl-1.5 pt-1">
+                                                <div className="flex flex-1 min-w-0 flex-col gap-2 items-center justify-start pl-1 pt-1 -ml-1.5">
                                                     <div className="flex flex-wrap gap-4 justify-center items-center">
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5 min-w-0">
@@ -2826,7 +2826,7 @@ export function App() {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-1 min-w-0 flex-col gap-2 items-center justify-start pl-1.5 pt-1">
+                                                <div className="flex flex-1 min-w-0 flex-col gap-2 items-center justify-start pl-1 pt-1 -ml-1.5">
                                                     <div className="flex flex-wrap gap-4 justify-center items-center">
                                                         {['right', 'left'].map(lobeSide => (
                                                             <div key={lobeSide} className="flex flex-col items-center gap-0.5 min-w-0">
