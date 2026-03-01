@@ -351,10 +351,19 @@ function ensureThyroidNoduleTypes(tabsData) {
     }));
 }
 
+// 乳房與甲狀腺結節模板的預設值
+const DEFAULT_BREAST_SENTENCE = "A {W}x{H}cm small hypoechoic nodule at {C}'{D} from nipple.";
+const DEFAULT_BREAST_MERGED = "Some small hypoechoic nodules ({SIZES}) at {C}'{D} from nipple.";
+const DEFAULT_THYROID_SENTENCE = "A {W}x{H}cm hypoechoic nodule at {SIDE} lobe of thyroid gland.";
+const DEFAULT_THYROID_MERGED = "Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.";
+const DEFAULT_THYROID_MULTI_EXAMPLE = "Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.";
+
 // 從 localStorage 讀取初始狀態，避免 useEffect 造成的閃爍
 function loadInitialState() {
     const defaultTabs = [{ id: 'tab-default', name: '新頁籤', left: [], right: [] }];
     const defaultConfig = { spreadsheetId: '', apiKey: '', scriptUrl: '', isConnected: false };
+    const defaultBreast = { sentence: DEFAULT_BREAST_SENTENCE, merged: DEFAULT_BREAST_MERGED };
+    const defaultThyroid = { sentence: DEFAULT_THYROID_SENTENCE, merged: DEFAULT_THYROID_MERGED, multiExample: DEFAULT_THYROID_MULTI_EXAMPLE };
     try {
         const saved = localStorage.getItem(STORAGE_KEY)
             || localStorage.getItem('radiologyTemplatesConfig_v2');
@@ -371,12 +380,21 @@ function loadInitialState() {
                 }
             }
             if (data.config) config = data.config;
-            return { tabs, activeTabIdx, config };
+            const breastTemplates = {
+                sentence: (data.breastNoduleSentenceTemplate != null && typeof data.breastNoduleSentenceTemplate === 'string') ? data.breastNoduleSentenceTemplate : defaultBreast.sentence,
+                merged: (data.breastNoduleMergedTemplate != null && typeof data.breastNoduleMergedTemplate === 'string') ? data.breastNoduleMergedTemplate : defaultBreast.merged
+            };
+            const thyroidTemplates = {
+                sentence: (data.thyroidNoduleSentenceTemplate != null && typeof data.thyroidNoduleSentenceTemplate === 'string') ? data.thyroidNoduleSentenceTemplate : defaultThyroid.sentence,
+                merged: (data.thyroidNoduleMergedTemplate != null && typeof data.thyroidNoduleMergedTemplate === 'string') ? data.thyroidNoduleMergedTemplate : defaultThyroid.merged,
+                multiExample: (data.thyroidNoduleMultiExampleTemplate != null && typeof data.thyroidNoduleMultiExampleTemplate === 'string') ? data.thyroidNoduleMultiExampleTemplate : defaultThyroid.multiExample
+            };
+            return { tabs, activeTabIdx, config, breastTemplates, thyroidTemplates };
         }
     } catch (e) {
         console.error("localStorage 存取失敗", e);
     }
-    return { tabs: defaultTabs, activeTabIdx: 0, config: defaultConfig };
+    return { tabs: defaultTabs, activeTabIdx: 0, config: defaultConfig, breastTemplates: defaultBreast, thyroidTemplates: defaultThyroid };
 }
 
 export function App() {
@@ -395,8 +413,8 @@ export function App() {
     const [editingTabName, setEditingTabName] = useState(false); // 是否正在修改頁籤名稱
     const [showSettings, setShowSettings] = useState(false);
     const [breastNoduleGroupParams, setBreastNoduleGroupParams] = useState({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null });
-    const [breastNoduleSentenceTemplate, setBreastNoduleSentenceTemplate] = useState("A {W}x{H}cm small hypoechoic nodule at {C}'{D} from nipple.");
-    const [breastNoduleMergedTemplate, setBreastNoduleMergedTemplate] = useState("Some small hypoechoic nodules ({SIZES}) at {C}'{D} from nipple.");
+    const [breastNoduleSentenceTemplate, setBreastNoduleSentenceTemplate] = useState(initialState.breastTemplates.sentence);
+    const [breastNoduleMergedTemplate, setBreastNoduleMergedTemplate] = useState(initialState.breastTemplates.merged);
     const [breastNodulePendingTexts, setBreastNodulePendingTexts] = useState([]); // 暫存多顆結節的結構資料 { w, h, clock }，搭配 M 鍵使用
     const [editingSentenceTemplate, setEditingSentenceTemplate] = useState(false);
     const [lastDistKeyPressed, setLastDistKeyPressed] = useState(null);
@@ -405,9 +423,9 @@ export function App() {
         right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false },
         left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }
     });
-    const [thyroidNoduleSentenceTemplate, setThyroidNoduleSentenceTemplate] = useState("A {W}x{H}cm hypoechoic nodule at {SIDE} lobe of thyroid gland.");
-    const [thyroidNoduleMergedTemplate, setThyroidNoduleMergedTemplate] = useState("Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.");
-    const [thyroidNoduleMultiExampleTemplate, setThyroidNoduleMultiExampleTemplate] = useState("Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland."); // 3+ 顆時使用
+    const [thyroidNoduleSentenceTemplate, setThyroidNoduleSentenceTemplate] = useState(initialState.thyroidTemplates.sentence);
+    const [thyroidNoduleMergedTemplate, setThyroidNoduleMergedTemplate] = useState(initialState.thyroidTemplates.merged);
+    const [thyroidNoduleMultiExampleTemplate, setThyroidNoduleMultiExampleTemplate] = useState(initialState.thyroidTemplates.multiExample); // 3+ 顆時使用
     const [thyroidNodulePending, setThyroidNodulePending] = useState([]); // [{w, h, side}, ...] 單一暫存，同時輸出左右側
     const [thyroidLastKeyPressed, setThyroidLastKeyPressed] = useState({ right: null, left: null });
     const [thyroidPlusHighlightLobe, setThyroidPlusHighlightLobe] = useState(null); // + 點擊後反白 1 秒，'left' | null
@@ -582,15 +600,25 @@ export function App() {
         if (!editingTemplatesGroup) setHoveredTemplateInEdit(null);
     }, [editingTemplatesGroup]);
 
-    const saveToLocal = (newTabs, currentConfig = config, currentActiveTabIdx = activeTabIdx) => {
+    const saveToLocal = (newTabs, currentConfig = config, currentActiveTabIdx = activeTabIdx, templateOverrides = null) => {
         const data = {
             tabs: newTabs,
             config: currentConfig,
             lastUpdated: new Date().toISOString(),
-            activeTabIdx: currentActiveTabIdx
+            activeTabIdx: currentActiveTabIdx,
+            breastNoduleSentenceTemplate: templateOverrides?.breastSentence ?? breastNoduleSentenceTemplate,
+            breastNoduleMergedTemplate: templateOverrides?.breastMerged ?? breastNoduleMergedTemplate,
+            thyroidNoduleSentenceTemplate: templateOverrides?.thyroidSentence ?? thyroidNoduleSentenceTemplate,
+            thyroidNoduleMergedTemplate: templateOverrides?.thyroidMerged ?? thyroidNoduleMergedTemplate,
+            thyroidNoduleMultiExampleTemplate: templateOverrides?.thyroidMultiExample ?? thyroidNoduleMultiExampleTemplate
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     };
+
+    // 乳房/甲狀腺結節模板變更時一併儲存至 localStorage
+    useEffect(() => {
+        saveToLocal(tabs, config, activeTabIdx);
+    }, [breastNoduleSentenceTemplate, breastNoduleMergedTemplate, thyroidNoduleSentenceTemplate, thyroidNoduleMergedTemplate, thyroidNoduleMultiExampleTemplate]);
 
     // --- Google Sheets 同步邏輯 (多頁籤版) ---
 
@@ -613,8 +641,20 @@ export function App() {
 
             setSyncStatus('下載內容中...');
             const newTabs = [];
-            let breastNoduleTemplateFromSheets = null;
-            let thyroidNoduleTemplateFromSheets = null;
+            let breastSentence = null, breastMerged = null;
+            let thyroidSentence = null, thyroidMerged = null, thyroidMultiExample = null;
+
+            const applyTemplate = (gName, templateName, content) => {
+                if (gName === '乳房結節描述' && content) {
+                    if (templateName === '句子模板') breastSentence = content;
+                    else if (templateName === '合併模板') breastMerged = content;
+                }
+                if (gName === '甲狀腺結節描述' && content) {
+                    if (templateName === '句子模板') thyroidSentence = content;
+                    else if (templateName === '合併模板') thyroidMerged = content;
+                    else if (templateName === '多顆範例模板') thyroidMultiExample = content;
+                }
+            };
 
             // 2. 遍歷每一個 Sheet，讀取 A:F 欄位（分組版：左 A,B,C / 右 D,E,F）
             for (const sheet of metaData.sheets) {
@@ -637,18 +677,7 @@ export function App() {
                         const gName = String(row[0]).trim();
                         const templateName = String(row[1]).trim();
                         const content = row[2] != null ? String(row[2]) : '';
-                        if (gName === '乳房結節描述' && content) {
-                            const isSentenceTemplateRow = templateName === '句子模板';
-                            if (isSentenceTemplateRow || breastNoduleTemplateFromSheets == null) {
-                                breastNoduleTemplateFromSheets = content;
-                            }
-                        }
-                        if (gName === '甲狀腺結節描述' && content) {
-                            const isThyroidTemplateRow = templateName === '句子模板';
-                            if (isThyroidTemplateRow || thyroidNoduleTemplateFromSheets == null) {
-                                thyroidNoduleTemplateFromSheets = content;
-                            }
-                        }
+                        applyTemplate(gName, templateName, content);
                         if (!leftByGroup[gName]) leftByGroup[gName] = [];
                         leftByGroup[gName].push({
                             id: `L-${title}-${idx}-${ts}`,
@@ -662,18 +691,7 @@ export function App() {
                         const gName = String(row[3]).trim();
                         const templateName = String(row[4]).trim();
                         const content = row[5] != null ? String(row[5]) : '';
-                        if (gName === '乳房結節描述' && content) {
-                            const isSentenceTemplateRow = templateName === '句子模板';
-                            if (isSentenceTemplateRow || breastNoduleTemplateFromSheets == null) {
-                                breastNoduleTemplateFromSheets = content;
-                            }
-                        }
-                        if (gName === '甲狀腺結節描述' && content) {
-                            const isThyroidTemplateRow = templateName === '句子模板';
-                            if (isThyroidTemplateRow || thyroidNoduleTemplateFromSheets == null) {
-                                thyroidNoduleTemplateFromSheets = content;
-                            }
-                        }
+                        applyTemplate(gName, templateName, content);
                         if (!rightByGroup[gName]) rightByGroup[gName] = [];
                         rightByGroup[gName].push({
                             id: `R-${title}-${idx}-${ts}`,
@@ -701,15 +719,20 @@ export function App() {
             }
 
             setTabs(newTabs);
-            if (breastNoduleTemplateFromSheets != null) {
-                setBreastNoduleSentenceTemplate(breastNoduleTemplateFromSheets);
-            }
-            if (thyroidNoduleTemplateFromSheets != null) {
-                setThyroidNoduleSentenceTemplate(thyroidNoduleTemplateFromSheets);
-            }
+            if (breastSentence != null) setBreastNoduleSentenceTemplate(breastSentence);
+            if (breastMerged != null) setBreastNoduleMergedTemplate(breastMerged);
+            if (thyroidSentence != null) setThyroidNoduleSentenceTemplate(thyroidSentence);
+            if (thyroidMerged != null) setThyroidNoduleMergedTemplate(thyroidMerged);
+            if (thyroidMultiExample != null) setThyroidNoduleMultiExampleTemplate(thyroidMultiExample);
             const keepIdx = activeTabIdx < newTabs.length ? activeTabIdx : 0;
             setActiveTabIdx(keepIdx);
-            saveToLocal(newTabs, config, keepIdx);
+            saveToLocal(newTabs, config, keepIdx, {
+                breastSentence: breastSentence ?? undefined,
+                breastMerged: breastMerged ?? undefined,
+                thyroidSentence: thyroidSentence ?? undefined,
+                thyroidMerged: thyroidMerged ?? undefined,
+                thyroidMultiExample: thyroidMultiExample ?? undefined
+            });
             setSyncStatus('匯入成功！');
             showToast(`已匯入 ${newTabs.length} 個頁籤`);
             setTimeout(() => setSyncStatus('已連接'), 2000);
