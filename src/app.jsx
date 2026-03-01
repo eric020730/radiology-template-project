@@ -412,6 +412,7 @@ export function App() {
     const [thyroidLastKeyPressed, setThyroidLastKeyPressed] = useState({ right: null, left: null });
     const [thyroidPlusHighlightLobe, setThyroidPlusHighlightLobe] = useState(null); // + 點擊後反白 1 秒，'left' | null
     const [thyroidNoduleSizeKeyHighlight, setThyroidNoduleSizeKeyHighlight] = useState(null); // 'right' | 'left' | null
+    const [thyroidJustReachedThree, setThyroidJustReachedThree] = useState(false); // 單一 + 新增至某側 3 顆時為 true，點 split + 或 C 後清除
     const [editingThyroidSentenceTemplate, setEditingThyroidSentenceTemplate] = useState(false);
     const [copiedId, setCopiedId] = useState(null);
     const [syncStatus, setSyncStatus] = useState('本地儲存');
@@ -451,7 +452,7 @@ export function App() {
 
     // 取得當前頁籤的資料方便操作
     const activeTab = tabs[activeTabIdx] || tabs[0];
-    const thyroidShowSplitPlus = thyroidNodulePending.filter(p => p.side === 'right').length >= 3 || thyroidNodulePending.filter(p => p.side === 'left').length >= 3;
+    const thyroidShowSplitPlus = thyroidJustReachedThree;
 
     // 將名稱為「乳房結節描述」的分組補上 type，避免因匯入或外部腳本改動而失去特殊 UI
 
@@ -1364,6 +1365,7 @@ export function App() {
         if (key === 'C') {
             thyroidNodulePendingRef.current = [];
             setThyroidNodulePending([]);
+            setThyroidJustReachedThree(false);
             setThyroidNoduleSizeKeyHighlight(lobeSide);
             setTimeout(() => setThyroidNoduleSizeKeyHighlight(null), 1000);
             // 同時清除剪貼簿中剛複製的結節句子
@@ -1539,9 +1541,11 @@ export function App() {
             if (key === 'MR') { setThyroidPlusHighlightLobe('right'); setTimeout(() => setThyroidPlusHighlightLobe(null), 1000); }
             else if (key === 'ML') { setThyroidPlusHighlightLobe('left'); setTimeout(() => setThyroidPlusHighlightLobe(null), 1000); }
             else { setThyroidPlusHighlightLobe(null); }
-            if (!addRight && !addLeft && !copyRightOnly && !copyLeftOnly) return;
-            if (copyRightOnly || copyLeftOnly) {
+            const copyOppositeAndRevert = (key === 'MR' && pendingLeft.length >= 3 && !leftValid) || (key === 'ML' && pendingRight.length >= 3 && !rightValid);
+            if (!addRight && !addLeft && !copyRightOnly && !copyLeftOnly && !copyOppositeAndRevert) return;
+            if (copyRightOnly || copyLeftOnly || copyOppositeAndRevert) {
                 outputThyroidFromNodes(thyroidNodulePendingRef.current);
+                setThyroidJustReachedThree(false);
                 return;
             }
             const toAdd = [];
@@ -1555,6 +1559,9 @@ export function App() {
             const newPending = [...thyroidNodulePendingRef.current, ...toAdd];
             thyroidNodulePendingRef.current = newPending;
             setThyroidNodulePending(newPending);
+            const rightCount = newPending.filter(p => p.side === 'right').length;
+            const leftCount = newPending.filter(p => p.side === 'left').length;
+            if ((addRight && rightCount >= 3) || (addLeft && leftCount >= 3)) setThyroidJustReachedThree(true);
             outputThyroidFromNodes(newPending);
             setThyroidNoduleParams(prev => ({
                 right: addRight ? { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false } : prev.right,
