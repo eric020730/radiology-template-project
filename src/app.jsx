@@ -1370,10 +1370,6 @@ export function App() {
         setThyroidNoduleParams(prev => {
             const p = prev[lobeSide];
             const { activeField, sizeWStr, sizeHStr } = p;
-            // 若本側已完成有效尺寸（長×寬皆>0），須先按 + 才能輸入下一顆，否則封鎖數字輸入
-            const w = parseSizeValue(p.sizeWStr);
-            const h = parseSizeValue(p.sizeHStr);
-            if (w > 0 && h > 0 && (key === '.' || /^[0-9]$/.test(key))) return prev;
             let updated;
             if (key === 'C') {
                 const cleared = { right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }, left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false } };
@@ -1383,12 +1379,12 @@ export function App() {
                 if (key === '.') return prev;
                 updated = { ...p, sizeWStr: key, activeField: 'sizeW', reEnterPending: false };
             } else if (activeField === 'sizeW') {
+                // 與乳房結節相同邏輯
                 if (p.reEnterPending && key !== '.') {
                     updated = { ...p, sizeWStr: key, reEnterPending: false };
                 } else if (key === '.') {
-                    if (sizeWStr && !sizeWStr.includes('.') && sizeWStr !== '0') {
-                        updated = { ...p, sizeWStr: sizeWStr + '.', reEnterPending: false };
-                    } else return prev;
+                    if (sizeWStr && !sizeWStr.includes('.') && sizeWStr !== '0') updated = { ...p, sizeWStr: sizeWStr + '.', reEnterPending: false };
+                    else return prev;
                 } else if (!sizeWStr || sizeWStr === '0') {
                     updated = { ...p, sizeWStr: key, reEnterPending: false };
                 } else if (sizeWStr.includes('.')) {
@@ -1398,10 +1394,10 @@ export function App() {
                     updated = { ...p, sizeHStr: key, activeField: 'sizeH', reEnterPending: false };
                 }
             } else if (activeField === 'sizeH') {
+                // 與乳房結節相同邏輯
                 if (key === '.') {
-                    if (sizeHStr && !sizeHStr.includes('.') && sizeHStr !== '0') {
-                        updated = { ...p, sizeHStr: sizeHStr + '.', reEnterPending: false };
-                    } else return prev;
+                    if (sizeHStr && !sizeHStr.includes('.') && sizeHStr !== '0') updated = { ...p, sizeHStr: sizeHStr + '.', reEnterPending: false };
+                    else return prev;
                 } else if (p.reEnterPending || !sizeHStr || sizeHStr === '0') {
                     updated = { ...p, sizeHStr: key, reEnterPending: false };
                 } else if (sizeHStr.includes('.')) {
@@ -1534,12 +1530,10 @@ export function App() {
             if (leftValid) toAdd.push({ w: leftW, h: leftH, side: 'left' });
             const clearedParams = { right: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false }, left: { sizeWStr: '0', sizeHStr: '0', activeField: null, reEnterPending: false } };
             thyroidNoduleParamsRef.current = clearedParams; // 即時同步，下一顆輸入時 ref 正確
-            setThyroidNodulePending(prev => {
-                const next = [...prev, ...toAdd];
-                thyroidNodulePendingRef.current = next; // 即時同步 ref
-                outputThyroidFromNodes(next); // 使用最新累積結果複製，避免閉包取到舊 state
-                return next;
-            });
+            const newPending = [...thyroidNodulePendingRef.current, ...toAdd]; // 用 ref 取得最新 pending，避免閉包
+            thyroidNodulePendingRef.current = newPending; // 立即同步 ref，讓輸入完成時的 auto-copy 能讀到
+            setThyroidNodulePending(newPending);
+            outputThyroidFromNodes(newPending);
             setThyroidNoduleParams(clearedParams);
             return;
         }
