@@ -2424,7 +2424,7 @@ export function App() {
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
                                             <div className="rounded-lg border border-slate-200 bg-white p-0.5 flex flex-row items-start gap-3">
-                                                <div className="relative min-w-0 flex-[1_1_200px] ml-4" style={{ minWidth: '100px', maxWidth: '200px', aspectRatio: '480/374' }}>
+                                                <div className="relative min-w-0 flex-[1_1_200px] ml-5" style={{ minWidth: '100px', maxWidth: '200px', aspectRatio: '480/374' }}>
                                                     <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
                                                     <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
@@ -2805,7 +2805,7 @@ export function App() {
                                             </div>
                                         ) : group.type === 'thyroidNodule' ? (
                                             <div className="rounded-lg border border-slate-200 bg-white p-0.5 flex flex-row items-start gap-3">
-                                                <div className="relative min-w-0 flex-[1_1_200px] ml-4" style={{ minWidth: '100px', maxWidth: '200px', aspectRatio: '480/374' }}>
+                                                <div className="relative min-w-0 flex-[1_1_200px] ml-5" style={{ minWidth: '100px', maxWidth: '200px', aspectRatio: '480/374' }}>
                                                     <ThyroidOutline className="w-full h-full absolute inset-0 pointer-events-none" />
                                                     <div className="absolute inset-0 flex items-center justify-between" style={{ padding: '4% 5%' }}>
                                                         {['right', 'left'].map(lobeSide => (
