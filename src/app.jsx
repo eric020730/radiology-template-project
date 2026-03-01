@@ -2252,15 +2252,40 @@ export function App() {
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                                 : k === '.'
-                                                                                    ? 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'
-                                                                                    : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
+                                                                                    ? (lastDistKeyPressed === '.' && breastNoduleGroupParams.clock != null ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                    : ((lastDistKeyPressed === k || (lastDistKeyPressed === '.' && breastNoduleGroupParams.distStr && breastNoduleGroupParams.distStr.split('.')[0] === k)) && breastNoduleGroupParams.clock != null
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
-                                                                            // . 鍵：與左側尺寸鍵盤的小數點相同
+                                                                            // . 鍵：將離乳頭距離加上 .5（如 2 → 2.5），並複製
                                                                             if (k === '.') {
-                                                                                applyBreastNoduleKeypad('.');
+                                                                                if (breastNoduleGroupParams.clock == null) return;
+                                                                                const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
+                                                                                const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                                if (w === 0 || h === 0) return;
+                                                                                const baseDistStr = breastNoduleGroupParams.distStr || '';
+                                                                                if (baseDistStr.includes('.')) return; // 已有小數則不再追加
+                                                                                const newDistStr = (baseDistStr || '0') + '.5';
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                                setLastDistKeyPressed('.');
+                                                                                const c = breastNoduleGroupParams.clock;
+                                                                                const numericDist = parseFloat(newDistStr) || 0;
+                                                                                let singleText = breastNoduleSentenceTemplate
+                                                                                    .replace(/\{W\}/g, String(w)).replace(/\{H\}/g, String(h))
+                                                                                    .replace(/\{C\}/g, String(c))
+                                                                                    .replace(/\{D\}/g, '/' + numericDist + ' cm');
+                                                                                if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                                let textToCopy = breastNodulePendingTexts.length > 0
+                                                                                    ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c }], String(numericDist)).join('\n')
+                                                                                    : singleText;
+                                                                                if (textToCopy) {
+                                                                                    const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
+                                                                                    const finalText = lines.map(line => `   - ${line.replace(/^\s*-\s*/, '')}`).join('\n');
+                                                                                    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(finalText).catch(() => {});
+                                                                                    else { const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+                                                                                }
+                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 return;
                                                                             }
                                                                             // M 鍵：若尺寸/方位/距離未完整，不反白也不觸發任何動作
@@ -2616,14 +2641,40 @@ export function App() {
                                                                                         : 'bg-red-500 border-red-600 text-white')
                                                                                     : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                                 : k === '.'
-                                                                                    ? 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100'
-                                                                                    : (lastDistKeyPressed === k && breastNoduleGroupParams.clock != null
+                                                                                    ? (lastDistKeyPressed === '.' && breastNoduleGroupParams.clock != null ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
+                                                                                    : ((lastDistKeyPressed === k || (lastDistKeyPressed === '.' && breastNoduleGroupParams.distStr && breastNoduleGroupParams.distStr.split('.')[0] === k)) && breastNoduleGroupParams.clock != null
                                                                                         ? 'bg-blue-500 border-blue-600 text-white'
                                                                                         : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-100')
                                                                         }`}
                                                                         onClick={() => {
+                                                                            // . 鍵：將離乳頭距離加上 .5（如 2 → 2.5），並複製
                                                                             if (k === '.') {
-                                                                                applyBreastNoduleKeypad('.');
+                                                                                if (breastNoduleGroupParams.clock == null) return;
+                                                                                const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
+                                                                                const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
+                                                                                if (w === 0 || h === 0) return;
+                                                                                const baseDistStr = breastNoduleGroupParams.distStr || '';
+                                                                                if (baseDistStr.includes('.')) return;
+                                                                                const newDistStr = (baseDistStr || '0') + '.5';
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                                setLastDistKeyPressed('.');
+                                                                                const c = breastNoduleGroupParams.clock;
+                                                                                const numericDist = parseFloat(newDistStr) || 0;
+                                                                                let singleText = breastNoduleSentenceTemplate
+                                                                                    .replace(/\{W\}/g, String(w)).replace(/\{H\}/g, String(h))
+                                                                                    .replace(/\{C\}/g, String(c))
+                                                                                    .replace(/\{D\}/g, '/' + numericDist + ' cm');
+                                                                                if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                                let textToCopy = breastNodulePendingTexts.length > 0
+                                                                                    ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c }], String(numericDist)).join('\n')
+                                                                                    : singleText;
+                                                                                if (textToCopy) {
+                                                                                    const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
+                                                                                    const finalText = lines.map(line => `   - ${line.replace(/^\s*-\s*/, '')}`).join('\n');
+                                                                                    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(finalText).catch(() => {});
+                                                                                    else { const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+                                                                                }
+                                                                                setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 return;
                                                                             }
                                                                             if (k === 'M') {
