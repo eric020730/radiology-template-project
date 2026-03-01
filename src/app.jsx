@@ -1416,9 +1416,21 @@ export function App() {
                 const completingW = parseSizeValue(newP.sizeWStr);
                 const completingH = parseSizeValue(newP.sizeHStr);
                 if (completingW > 0 && completingH > 0) {
+                    const nodesFromParams = [];
+                    for (const s of ['right', 'left']) {
+                        const q = nextState[s];
+                        const qw = parseSizeValue(q.sizeWStr);
+                        const qh = parseSizeValue(q.sizeHStr);
+                        if (qw > 0 && qh > 0) nodesFromParams.push({ w: qw, h: qh, side: s });
+                    }
                     const pending = thyroidNodulePendingRef.current;
-                    const nodesToOutput = [...pending, { w: completingW, h: completingH, side: lobeSide }];
-                    outputThyroidFromNodes(nodesToOutput); // 輸入完成時立即複製，不需再按 +
+                    const nodesToOutput = []; // 同側：pending（先前+加入） + params（本次輸入完成）
+                    for (const s of ['right', 'left']) {
+                        const fromP = nodesFromParams.filter(n => n.side === s);
+                        const fromPending = pending.filter(n => n.side === s);
+                        nodesToOutput.push(...fromPending, ...fromP);
+                    }
+                    if (nodesToOutput.length > 0) outputThyroidFromNodes(nodesToOutput);
                 }
             }
             return nextState;
