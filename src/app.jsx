@@ -1256,6 +1256,7 @@ export function App() {
     const parseSizeValue = (str) => {
         if (!str) return 0;
         if (str.includes('.')) return parseFloat(str) || 0;
+        if (str.length >= 2) return parseFloat(str) || 0; // 多位整數如 10、11、12
         return parseFloat(`0.${str}`) || 0;
     };
 
