@@ -1249,6 +1249,7 @@ export function App() {
         if (!str) return placeholder;
         if (str === '0') return '0';
         if (str.includes('.')) return str;
+        if (str.length >= 2) return str; // 多位整數（如 10、11）直接顯示
         return `0.${str}`;
     };
 
@@ -1391,7 +1392,8 @@ export function App() {
                     if ((sizeWStr.split('.')[1] || '').length >= 1) return prev;
                     updated = { ...p, sizeWStr: sizeWStr + key, activeField: 'sizeH', reEnterPending: false };
                 } else {
-                    updated = { ...p, sizeHStr: key, activeField: 'sizeH', reEnterPending: false };
+                    // 允許多位整數（如 10、11）再按 . 輸入小數
+                    updated = { ...p, sizeWStr: sizeWStr + key, reEnterPending: false };
                 }
             } else if (activeField === 'sizeH') {
                 // 與乳房結節相同邏輯
@@ -1404,7 +1406,8 @@ export function App() {
                     if ((sizeHStr.split('.')[1] || '').length >= 1) return prev;
                     updated = { ...p, sizeHStr: sizeHStr + key, reEnterPending: false };
                 } else {
-                    updated = { ...p, sizeHStr: key, reEnterPending: false };
+                    // 允許多位整數（如 2、12）
+                    updated = { ...p, sizeHStr: sizeHStr + key, reEnterPending: false };
                 }
             } else {
                 return prev;
@@ -1509,15 +1512,6 @@ export function App() {
         } else {
             const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
         }
-    };
-
-    const copyThyroidNoduleOnWideClick = (lobeSide) => {
-        const p = thyroidNoduleParams[lobeSide];
-        const w = parseSizeValue(p.sizeWStr);
-        const h = parseSizeValue(p.sizeHStr);
-        if (w === 0 || h === 0) return false;
-        copyThyroidNoduleOutput(lobeSide, p.sizeWStr, p.sizeHStr);
-        return true;
     };
 
     const handleThyroidAction = (lobeSide, key) => {
@@ -2403,7 +2397,7 @@ export function App() {
                                                                 <div className="flex items-center justify-center gap-0.5">
                                                                     <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
                                                                     <span className="text-slate-400 text-xs">×</span>
-                                                                    <button type="button" onClick={() => { if (!copyThyroidNoduleOnWideClick(lobeSide)) setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}})); }} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -2777,7 +2771,7 @@ export function App() {
                                                                 <div className="flex items-center justify-center gap-0.5">
                                                                     <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeW', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeW' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeWStr, '長')}</button>
                                                                     <span className="text-slate-400 text-xs">×</span>
-                                                                    <button type="button" onClick={() => { if (!copyThyroidNoduleOnWideClick(lobeSide)) setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}})); }} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
+                                                                    <button type="button" onClick={() => setThyroidNoduleParams(prev => ({...prev, [lobeSide]: {...prev[lobeSide], activeField: 'sizeH', reEnterPending: true}}))} className={`px-1.5 py-0.5 rounded text-xs font-mono min-w-[2.2rem] ${thyroidNoduleParams[lobeSide].activeField === 'sizeH' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white border border-slate-200'}`}>{formatSizeDisplay(thyroidNoduleParams[lobeSide].sizeHStr, '寬')}</button>
                                                                 </div>
                                                             </div>
                                                         ))}
