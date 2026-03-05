@@ -1390,7 +1390,7 @@ export function App() {
         setEditingGroupName({ groupId: newGroup.id, side });
     };
 
-    const THYROID_LONG_PRESS_MS = 600;
+    const THYROID_LONG_PRESS_MS = 300;
     const handleThyroidSizeFieldDown = (lobeSide, field) => {
         thyroidLongPressRef.current = { fired: false, lobeSide, field };
         thyroidLongPressTimerRef.current = setTimeout(() => {
@@ -1454,7 +1454,7 @@ export function App() {
         applyThyroidNoduleKeypad(lobeSide, k);
     };
 
-    const BREAST_LONG_PRESS_MS = 600;
+    const BREAST_LONG_PRESS_MS = 300;
     const handleBreastSizeFieldDown = (field) => {
         breastLongPressRef.current = { fired: false, field };
         breastLongPressTimerRef.current = setTimeout(() => {
