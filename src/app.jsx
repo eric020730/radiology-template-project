@@ -1558,7 +1558,7 @@ export function App() {
                     .replace(/\{C\}/g, String(g.clock))
                     .replace(/\{D\}/g, '/' + groupDist + ' cm');
                 if (w >= 1 || h >= 1) {
-                    text = text.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                    text = text.replace(/\bsmall\b/gi, '').replace(/(?<=\S)\s{2,}/g, ' ');
                 }
                 lines.push(text);
             } else {
@@ -1569,7 +1569,7 @@ export function App() {
                     .replace(/\{C\}/g, String(g.clock))
                     .replace(/\{D\}/g, '/' + groupDist + ' cm');
                 if (anyLarge) {
-                    text = text.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                    text = text.replace(/\bsmall\b/gi, '').replace(/(?<=\S)\s{2,}/g, ' ');
                 }
                 lines.push(text);
             }
@@ -2705,7 +2705,7 @@ export function App() {
                                                                                     .replace(/\{L\}|\{長\}/g, formatNoduleSize(w)).replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                                                                                     .replace(/\{C\}/g, String(c))
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
-                                                                                if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                                if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/(?<=\S)\s{2,}/g, ' ');
                                                                                 let textToCopy = breastNodulePendingTexts.length > 0
                                                                                     ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c, dist: String(numericDist) }]).join('\n')
                                                                                     : singleText;
@@ -2752,7 +2752,7 @@ export function App() {
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             if (w >= 1 || h >= 1) {
-                                                                                singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                                singleText = singleText.replace(/\bsmall\b/gi, '').replace(/(?<=\S)\s{2,}/g, ' ');
                                                                             }
                                                                             let textToCopy = singleText;
 
@@ -3101,7 +3101,7 @@ export function App() {
                                                                                     .replace(/\{L\}|\{長\}/g, formatNoduleSize(w)).replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                                                                                     .replace(/\{C\}/g, String(c))
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
-                                                                                if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                                if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/(?<=\S)\s{2,}/g, ' ');
                                                                                 let textToCopy = breastNodulePendingTexts.length > 0
                                                                                     ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c, dist: String(numericDist) }]).join('\n')
                                                                                     : singleText;
@@ -3145,7 +3145,7 @@ export function App() {
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             if (w >= 1 || h >= 1) {
-                                                                                singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
+                                                                                singleText = singleText.replace(/\bsmall\b/gi, '').replace(/(?<=\S)\s{2,}/g, ' ');
                                                                             }
                                                                             let textToCopy = singleText;
 
