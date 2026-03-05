@@ -1551,8 +1551,8 @@ export function App() {
             if (g.items.length === 1) {
                 const { w, h } = g.items[0];
                 let text = breastNoduleSentenceTemplate
-                    .replace(/\{W\}/g, String(w))
-                    .replace(/\{H\}/g, String(h))
+                    .replace(/\{W\}/g, formatNoduleSize(w))
+                    .replace(/\{H\}/g, formatNoduleSize(h))
                     .replace(/\{C\}/g, String(g.clock))
                     .replace(/\{D\}/g, '/' + dist + ' cm');
                 if (w >= 1 || h >= 1) {
@@ -1560,7 +1560,7 @@ export function App() {
                 }
                 lines.push(text);
             } else {
-                const sizes = g.items.map(n => `${n.w}x${n.h}cm`).join(', ');
+                const sizes = g.items.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
                 const anyLarge = g.items.some(n => n.w >= 1 || n.h >= 1);
                 let text = breastNoduleMergedTemplate
                     .replace(/\{SIZES\}/g, sizes)
@@ -1839,6 +1839,7 @@ export function App() {
     };
 
     const sortNodulesBySize = (nodules) => nodules.slice().sort((a, b) => (b.w !== a.w ? b.w - a.w : b.h - a.h)); // 長由大至小，長相同則寬由大至小
+    const formatNoduleSize = (n) => Number(n).toFixed(1); // 輸出格式固定為一位小數，例如 2.0x1.0
 
     const outputThyroidFromNodes = (nodes, options = {}) => {
         if (!nodes || nodes.length === 0) return;
@@ -1849,10 +1850,10 @@ export function App() {
             let nodules = bySide[side];
             if (nodules.length === 0) continue;
             if (nodules.length >= 3) nodules = sortNodulesBySize(nodules);
-            const sizes = nodules.map(n => `${n.w}x${n.h}cm`).join(', ');
+            const sizes = nodules.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
             const template = nodules.length === 1 ? thyroidNoduleSentenceTemplate : (nodules.length <= 3 && !forceMultiExample) ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
             const line = nodules.length === 1
-                ? template.split('{W}').join(String(nodules[0].w)).split('{H}').join(String(nodules[0].h)).split('{SIDE}').join(side)
+                ? template.split('{W}').join(formatNoduleSize(nodules[0].w)).split('{H}').join(formatNoduleSize(nodules[0].h)).split('{SIDE}').join(side)
                 : template.split('{SIZES}').join(sizes).split('{SIDE}').join(side);
             outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
         }
@@ -1889,9 +1890,9 @@ export function App() {
             const tmpl = nodules.length === 1 ? thyroidNoduleSentenceTemplate : nodules.length <= 3 ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
             let line;
             if (nodules.length === 1) {
-                line = tmpl.split('{W}').join(String(nodules[0].w)).split('{H}').join(String(nodules[0].h)).split('{SIDE}').join(side);
+                line = tmpl.split('{W}').join(formatNoduleSize(nodules[0].w)).split('{H}').join(formatNoduleSize(nodules[0].h)).split('{SIDE}').join(side);
             } else {
-                const sizes = nodules.map(n => `${n.w}x${n.h}cm`).join(', ');
+                const sizes = nodules.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
                 line = tmpl.split('{SIZES}').join(sizes).split('{SIDE}').join(side);
             }
             outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
@@ -1974,13 +1975,13 @@ export function App() {
             if (pending.length > 0) {
                 let allNodules = [...pending, { w, h }];
                 if (allNodules.length >= 3) allNodules = sortNodulesBySize(allNodules);
-                const sizes = allNodules.map(n => `${n.w}x${n.h}cm`).join(', ');
+                const sizes = allNodules.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
                 const tmpl = allNodules.length <= 3 ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
                 textToCopy = tmpl.replace(/\{SIZES\}/g, sizes).replace(/\{SIDE\}/g, lobeSide);
             } else {
                 textToCopy = thyroidNoduleSentenceTemplate
-                    .replace(/\{W\}/g, String(w))
-                    .replace(/\{H\}/g, String(h))
+                    .replace(/\{W\}/g, formatNoduleSize(w))
+                    .replace(/\{H\}/g, formatNoduleSize(h))
                     .replace(/\{SIDE\}/g, lobeSide);
             }
             const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
@@ -2690,7 +2691,7 @@ export function App() {
                                                                                 const c = breastNoduleGroupParams.clock;
                                                                                 const numericDist = parseFloat(newDistStr) || 0;
                                                                                 let singleText = breastNoduleSentenceTemplate
-                                                                                    .replace(/\{W\}/g, String(w)).replace(/\{H\}/g, String(h))
+                                                                                    .replace(/\{W\}/g, formatNoduleSize(w)).replace(/\{H\}/g, formatNoduleSize(h))
                                                                                     .replace(/\{C\}/g, String(c))
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
                                                                                 if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
@@ -2733,8 +2734,8 @@ export function App() {
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
                                                                             const dist = k === 'N' ? 'N' : String(numericDist);
                                                                             let singleText = breastNoduleSentenceTemplate
-                                                                                .replace(/\{W\}/g, String(w))
-                                                                                .replace(/\{H\}/g, String(h))
+                                                                                .replace(/\{W\}/g, formatNoduleSize(w))
+                                                                                .replace(/\{H\}/g, formatNoduleSize(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             // 長或寬任一 >= 1 時，自動移除 "small"
@@ -3085,7 +3086,7 @@ export function App() {
                                                                                 const c = breastNoduleGroupParams.clock;
                                                                                 const numericDist = parseFloat(newDistStr) || 0;
                                                                                 let singleText = breastNoduleSentenceTemplate
-                                                                                    .replace(/\{W\}/g, String(w)).replace(/\{H\}/g, String(h))
+                                                                                    .replace(/\{W\}/g, formatNoduleSize(w)).replace(/\{H\}/g, formatNoduleSize(h))
                                                                                     .replace(/\{C\}/g, String(c))
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
                                                                                 if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
@@ -3124,8 +3125,8 @@ export function App() {
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
                                                                             const dist = k === 'N' ? 'N' : String(numericDist);
                                                                             let singleText = breastNoduleSentenceTemplate
-                                                                                .replace(/\{W\}/g, String(w))
-                                                                                .replace(/\{H\}/g, String(h))
+                                                                                .replace(/\{W\}/g, formatNoduleSize(w))
+                                                                                .replace(/\{H\}/g, formatNoduleSize(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             if (w >= 1 || h >= 1) {
