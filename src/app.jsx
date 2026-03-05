@@ -467,7 +467,6 @@ export function App() {
     const [thyroidNoduleMultiExampleTemplate, setThyroidNoduleMultiExampleTemplate] = useState(initialState.thyroidTemplates.multiExample); // 4+ 顆時使用
     const [thyroidNodulePending, setThyroidNodulePending] = useState([]); // [{w, h, side}, ...] 單一暫存，同時輸出左右側
     const [thyroidLastKeyPressed, setThyroidLastKeyPressed] = useState({ right: null, left: null });
-    const [thyroidPlusHighlightLobe, setThyroidPlusHighlightLobe] = useState(null); // + 點擊後反白 1 秒，'left' | null
     const [thyroidNoduleSizeKeyHighlight, setThyroidNoduleSizeKeyHighlight] = useState(null); // 'right' | 'left' | null
     const [thyroidJustReachedThree, setThyroidJustReachedThree] = useState(false); // 單一 + 新增至某側 3 顆時為 true，點 split + 或 C 後清除
     const [editingThyroidSentenceTemplate, setEditingThyroidSentenceTemplate] = useState(false);
@@ -1850,10 +1849,14 @@ export function App() {
             let nodules = bySide[side];
             if (nodules.length === 0) continue;
             if (nodules.length >= 3) nodules = sortNodulesBySize(nodules);
-            const sizes = nodules.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
-            const template = nodules.length === 1 ? thyroidNoduleSentenceTemplate : (nodules.length <= 3 && !forceMultiExample) ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
-            const line = nodules.length === 1
-                ? template.split('{W}').join(formatNoduleSize(nodules[0].w)).split('{H}').join(formatNoduleSize(nodules[0].h)).split('{SIDE}').join(side)
+            // 若超過 3 顆，輸出時只取前三大
+            const nodulesForOutput = nodules.length > 3 ? nodules.slice(0, 3) : nodules;
+            const sizes = nodulesForOutput.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
+            // 同側 >3 顆時（只輸出前三大）或 forceMultiExample 時，使用多顆範例模板
+            const useMultiExample = nodules.length > 3 || forceMultiExample;
+            const template = nodulesForOutput.length === 1 ? thyroidNoduleSentenceTemplate : (nodulesForOutput.length <= 3 && !useMultiExample) ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
+            const line = nodulesForOutput.length === 1
+                ? template.split('{W}').join(formatNoduleSize(nodulesForOutput[0].w)).split('{H}').join(formatNoduleSize(nodulesForOutput[0].h)).split('{SIDE}').join(side)
                 : template.split('{SIZES}').join(sizes).split('{SIDE}').join(side);
             outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
         }
@@ -1887,12 +1890,15 @@ export function App() {
             if (nodules.length === 0) continue;
             if (nodules.length >= 3) nodules = sortNodulesBySize(nodules);
             for (const n of nodules) newPending.push({ w: n.w, h: n.h, side });
-            const tmpl = nodules.length === 1 ? thyroidNoduleSentenceTemplate : nodules.length <= 3 ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
+            // 若超過 3 顆，輸出時只取前三大，並使用多顆範例模板
+            const nodulesForOutput = nodules.length > 3 ? nodules.slice(0, 3) : nodules;
+            const useMultiExample = nodules.length > 3;
+            const tmpl = nodulesForOutput.length === 1 ? thyroidNoduleSentenceTemplate : (nodulesForOutput.length <= 3 && !useMultiExample) ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
             let line;
-            if (nodules.length === 1) {
-                line = tmpl.split('{W}').join(formatNoduleSize(nodules[0].w)).split('{H}').join(formatNoduleSize(nodules[0].h)).split('{SIDE}').join(side);
+            if (nodulesForOutput.length === 1) {
+                line = tmpl.split('{W}').join(formatNoduleSize(nodulesForOutput[0].w)).split('{H}').join(formatNoduleSize(nodulesForOutput[0].h)).split('{SIDE}').join(side);
             } else {
-                const sizes = nodules.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
+                const sizes = nodulesForOutput.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
                 line = tmpl.split('{SIZES}').join(sizes).split('{SIDE}').join(side);
             }
             outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
@@ -1934,9 +1940,6 @@ export function App() {
             // 同側 ≥3 顆時，點同側 +（無新尺寸）→ 直接複製 Several 格式；點對側 +（需輸入該側尺寸）→ 新增對側結節
             const copyRightOnly = key === 'MR' && !rightValid && pendingRight.length >= 3;
             const copyLeftOnly = key === 'ML' && !leftValid && pendingLeft.length >= 3;
-            if (key === 'MR') { setThyroidPlusHighlightLobe('right'); setTimeout(() => setThyroidPlusHighlightLobe(null), 1000); }
-            else if (key === 'ML') { setThyroidPlusHighlightLobe('left'); setTimeout(() => setThyroidPlusHighlightLobe(null), 1000); }
-            else { setThyroidPlusHighlightLobe(null); }
             const copyOppositeAndRevert = (key === 'MR' && pendingLeft.length >= 3 && !leftValid) || (key === 'ML' && pendingRight.length >= 3 && !rightValid);
             if (!addRight && !addLeft && !copyRightOnly && !copyLeftOnly && !copyOppositeAndRevert) return;
             if (copyRightOnly || copyLeftOnly || copyOppositeAndRevert) {
@@ -1975,8 +1978,11 @@ export function App() {
             if (pending.length > 0) {
                 let allNodules = [...pending, { w, h }];
                 if (allNodules.length >= 3) allNodules = sortNodulesBySize(allNodules);
-                const sizes = allNodules.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
-                const tmpl = allNodules.length <= 3 ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
+                // 若超過 3 顆，輸出時只取前三大，並使用多顆範例模板
+                const nodulesForOutput = allNodules.length > 3 ? allNodules.slice(0, 3) : allNodules;
+                const useMultiExample = allNodules.length > 3;
+                const sizes = nodulesForOutput.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
+                const tmpl = nodulesForOutput.length <= 3 && !useMultiExample ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
                 textToCopy = tmpl.replace(/\{SIZES\}/g, sizes).replace(/\{SIDE\}/g, lobeSide);
             } else {
                 textToCopy = thyroidNoduleSentenceTemplate
@@ -2803,11 +2809,11 @@ export function App() {
                                                                         {(lobeSide === 'right' ? ['7','8','9','4','5','6','1','2','3','C','0','.'] : ['7','8','9','4','5','6','1','2','3','M','0','.']).map((k) => (
                                                                             (lobeSide === 'left' && k === 'M' && thyroidShowSplitPlus) ? (
                                                                                 <div key={`thy-l-${lobeSide}-plus`} className="flex items-stretch gap-0 rounded overflow-hidden border border-slate-200 shadow-sm col-span-1 row-span-1 min-w-0 w-full aspect-square">
-                                                                                    <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidPlusHighlightLobe === 'right' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
-                                                                                    <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidPlusHighlightLobe === 'left' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                    <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidNodulePending.filter(p => p.side === 'right').length >= 3 ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                    <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidNodulePending.filter(p => p.side === 'left').length >= 3 ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
                                                                                 </div>
                                                                             ) : (
-                                                                                <button key={`thy-l-${lobeSide}-${k}`} type="button" {...(isDigitKey(k) ? { onMouseDown: () => handleThyroidKeypadDown(lobeSide, k), onMouseUp: handleThyroidKeypadUp, onMouseLeave: handleThyroidKeypadUp, onTouchStart: () => handleThyroidKeypadDown(lobeSide, k), onTouchEnd: handleThyroidKeypadUp, onTouchCancel: handleThyroidKeypadUp, onClick: () => handleThyroidKeypadClick(lobeSide, k) } : { onClick: () => applyThyroidNoduleKeypad(lobeSide, k) })} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${thyroidTenDigitTriggerKey?.lobeSide === lobeSide && thyroidTenDigitTriggerKey?.digit === k ? 'border-blue-500 bg-blue-100 text-blue-800' : k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : k === 'M' && thyroidPlusHighlightLobe === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`} title={isDigitKey(k) ? '長按 0.6 秒進入十位數模式' : k === '.' ? '刪除上一個數字' : undefined}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k === '.' ? '⌫' : k}</span></button>
+                                                                                <button key={`thy-l-${lobeSide}-${k}`} type="button" {...(isDigitKey(k) ? { onMouseDown: () => handleThyroidKeypadDown(lobeSide, k), onMouseUp: handleThyroidKeypadUp, onMouseLeave: handleThyroidKeypadUp, onTouchStart: () => handleThyroidKeypadDown(lobeSide, k), onTouchEnd: handleThyroidKeypadUp, onTouchCancel: handleThyroidKeypadUp, onClick: () => handleThyroidKeypadClick(lobeSide, k) } : { onClick: () => applyThyroidNoduleKeypad(lobeSide, k) })} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${thyroidTenDigitTriggerKey?.lobeSide === lobeSide && thyroidTenDigitTriggerKey?.digit === k ? 'border-blue-500 bg-blue-100 text-blue-800' : k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`} title={isDigitKey(k) ? '長按 0.6 秒進入十位數模式' : k === '.' ? '刪除上一個數字' : undefined}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k === '.' ? '⌫' : k}</span></button>
                                                                             )
                                                                         ))}
                                                                     </div>
@@ -3185,11 +3191,11 @@ export function App() {
                                                                         {(lobeSide === 'right' ? ['7','8','9','4','5','6','1','2','3','C','0','.'] : ['7','8','9','4','5','6','1','2','3','M','0','.']).map((k) => (
                                                                             (lobeSide === 'left' && k === 'M' && thyroidShowSplitPlus) ? (
                                                                                 <div key={`thy-r-${lobeSide}-plus`} className="flex items-stretch gap-0 rounded overflow-hidden border border-slate-200 shadow-sm col-span-1 row-span-1 min-w-0 w-full aspect-square">
-                                                                                    <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidPlusHighlightLobe === 'right' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
-                                                                                    <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidPlusHighlightLobe === 'left' ? 'bg-blue-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                    <button type="button" onClick={() => handleThyroidAction('right', 'MR')} title="加入右側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center border-r border-slate-200 ${thyroidNodulePending.filter(p => p.side === 'right').length >= 3 ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
+                                                                                    <button type="button" onClick={() => handleThyroidAction('left', 'ML')} title="加入左側" className={`flex-1 min-w-0 text-[9px] font-medium flex items-center justify-center ${thyroidNodulePending.filter(p => p.side === 'left').length >= 3 ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-white/90 text-slate-700 hover:bg-slate-100'}`}>+</button>
                                                                                 </div>
                                                                             ) : (
-                                                                                <button key={`thy-r-${lobeSide}-${k}`} type="button" {...(isDigitKey(k) ? { onMouseDown: () => handleThyroidKeypadDown(lobeSide, k), onMouseUp: handleThyroidKeypadUp, onMouseLeave: handleThyroidKeypadUp, onTouchStart: () => handleThyroidKeypadDown(lobeSide, k), onTouchEnd: handleThyroidKeypadUp, onTouchCancel: handleThyroidKeypadUp, onClick: () => handleThyroidKeypadClick(lobeSide, k) } : { onClick: () => applyThyroidNoduleKeypad(lobeSide, k) })} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${thyroidTenDigitTriggerKey?.lobeSide === lobeSide && thyroidTenDigitTriggerKey?.digit === k ? 'border-blue-500 bg-blue-100 text-blue-800' : k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : k === 'M' && thyroidPlusHighlightLobe === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`} title={isDigitKey(k) ? '長按 0.6 秒進入十位數模式' : k === '.' ? '刪除上一個數字' : undefined}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k === '.' ? '⌫' : k}</span></button>
+                                                                                <button key={`thy-r-${lobeSide}-${k}`} type="button" {...(isDigitKey(k) ? { onMouseDown: () => handleThyroidKeypadDown(lobeSide, k), onMouseUp: handleThyroidKeypadUp, onMouseLeave: handleThyroidKeypadUp, onTouchStart: () => handleThyroidKeypadDown(lobeSide, k), onTouchEnd: handleThyroidKeypadUp, onTouchCancel: handleThyroidKeypadUp, onClick: () => handleThyroidKeypadClick(lobeSide, k) } : { onClick: () => applyThyroidNoduleKeypad(lobeSide, k) })} className={`w-full aspect-square min-w-0 rounded border text-[10px] font-medium leading-none flex items-center justify-center shadow-sm ${thyroidTenDigitTriggerKey?.lobeSide === lobeSide && thyroidTenDigitTriggerKey?.digit === k ? 'border-blue-500 bg-blue-100 text-blue-800' : k === 'C' && thyroidNoduleSizeKeyHighlight === lobeSide ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100'}`} title={isDigitKey(k) ? '長按 0.6 秒進入十位數模式' : k === '.' ? '刪除上一個數字' : undefined}><span className="inline-flex items-center justify-center w-full h-full leading-[1]">{k === 'C' ? <EraserIcon size={12} /> : k === 'M' ? <span style={{display:'inline-block',transform:'translate(0, -1px)'}}>+</span> : k === '.' ? '⌫' : k}</span></button>
                                                                             )
                                                                         ))}
                                                                     </div>
