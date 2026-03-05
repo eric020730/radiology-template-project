@@ -34,6 +34,8 @@ function hasLeftRight(content) {
 
 function hasEnlargedPattern(content) {
     if (!content) return false;
+    // 排除 "No enlarged lymph nodes"（乳房超音波等）— PIO/小中大僅用於 chest film
+    if (/No\s+enlarged\s+lymph/i.test(content)) return false;
     return /No\s+enlarged/i.test(content);
 }
 
