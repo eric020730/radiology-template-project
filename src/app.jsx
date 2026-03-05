@@ -512,6 +512,8 @@ export function App() {
     const breastLongPressTimerRef = useRef(null);
     const breastKeypadLongPressRef = useRef({ fired: false, key: null });
     const breastKeypadLongPressTimerRef = useRef(null);
+    const clockLongPressRef = useRef({ fired: false, hour: null });
+    const clockLongPressTimerRef = useRef(null);
     const tabEditAreaRef = useRef(null);          // 當前頁籤標題與操作區域 ref
     const tabScrollRef = useRef(null);            // 頁籤欄左右滑動容器 ref
     
@@ -1516,6 +1518,32 @@ export function App() {
             return;
         }
         applyBreastNoduleKeypad(k);
+    };
+
+    const CLOCK_LONG_PRESS_MS = 300;
+    const handleClockDown = (h) => {
+        clockLongPressRef.current = { fired: false, hour: h };
+        clockLongPressTimerRef.current = setTimeout(() => {
+            clockLongPressRef.current.fired = true;
+            const halfHour = h === 12 ? 12.5 : h + 0.5;
+            setBreastNoduleGroupParams(p => ({ ...p, clock: halfHour }));
+            setLastDistKeyPressed(null);
+        }, CLOCK_LONG_PRESS_MS);
+    };
+    const handleClockUp = () => {
+        if (clockLongPressTimerRef.current) {
+            clearTimeout(clockLongPressTimerRef.current);
+            clockLongPressTimerRef.current = null;
+        }
+    };
+    const handleClockClick = (h) => {
+        const lp = clockLongPressRef.current;
+        if (lp.fired && lp.hour === h) {
+            clockLongPressRef.current = { fired: false, hour: null };
+            return;
+        }
+        setBreastNoduleGroupParams(p => ({ ...p, clock: h }));
+        setLastDistKeyPressed(null);
     };
 
     const formatSizeDisplay = (str, placeholder, forThyroid = false, forBreastOnesDigit = false) => {
@@ -2653,20 +2681,24 @@ export function App() {
                                                                 const r = 70;
                                                                 const x = 100 + r * Math.cos(angleRad);
                                                                 const y = 100 + r * Math.sin(angleRad);
-                                                                const isSelected = breastNoduleGroupParams.clock === h;
+                                                                const isHalf = breastNoduleGroupParams.clock === h + 0.5;
+                                                                const isSelected = breastNoduleGroupParams.clock === h || isHalf;
                                                                 return (
                                                                     <g
                                                                         key={h}
-                                                                        onClick={() => {
-                                                                            setBreastNoduleGroupParams(p => ({ ...p, clock: h }));
-                                                                            setLastDistKeyPressed(null);
-                                                                        }}
+                                                                        onMouseDown={() => handleClockDown(h)}
+                                                                        onMouseUp={handleClockUp}
+                                                                        onMouseLeave={handleClockUp}
+                                                                        onTouchStart={() => handleClockDown(h)}
+                                                                        onTouchEnd={handleClockUp}
+                                                                        onTouchCancel={handleClockUp}
+                                                                        onClick={() => handleClockClick(h)}
                                                                         style={{ cursor: 'pointer' }}
                                                                         transform={`translate(${x},${y})`}
                                                                     >
-                                                                        <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? '#3b82f6' : '#e2e8f0'} stroke={isSelected ? '#2563eb' : '#cbd5e1'} strokeWidth={2} />
+                                                                        <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? (isHalf ? '#f59e0b' : '#3b82f6') : '#e2e8f0'} stroke={isSelected ? (isHalf ? '#d97706' : '#2563eb') : '#cbd5e1'} strokeWidth={2} />
                                                                         <foreignObject x={-13} y={-13} width={26} height={26}>
-                                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{h}</div>
+                                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isHalf ? '8px' : '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{isHalf ? (h + 0.5) : h}</div>
                                                                         </foreignObject>
                                                                     </g>
                                                                 );
@@ -3049,20 +3081,24 @@ export function App() {
                                                                 const r = 70;
                                                                 const x = 100 + r * Math.cos(angleRad);
                                                                 const y = 100 + r * Math.sin(angleRad);
-                                                                const isSelected = breastNoduleGroupParams.clock === h;
+                                                                const isHalf = breastNoduleGroupParams.clock === h + 0.5;
+                                                                const isSelected = breastNoduleGroupParams.clock === h || isHalf;
                                                                 return (
                                                                     <g
                                                                         key={h}
-                                                                        onClick={() => {
-                                                                            setBreastNoduleGroupParams(p => ({ ...p, clock: h }));
-                                                                            setLastDistKeyPressed(null);
-                                                                        }}
+                                                                        onMouseDown={() => handleClockDown(h)}
+                                                                        onMouseUp={handleClockUp}
+                                                                        onMouseLeave={handleClockUp}
+                                                                        onTouchStart={() => handleClockDown(h)}
+                                                                        onTouchEnd={handleClockUp}
+                                                                        onTouchCancel={handleClockUp}
+                                                                        onClick={() => handleClockClick(h)}
                                                                         style={{ cursor: 'pointer' }}
                                                                         transform={`translate(${x},${y})`}
                                                                     >
-                                                                        <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? '#3b82f6' : '#e2e8f0'} stroke={isSelected ? '#2563eb' : '#cbd5e1'} strokeWidth={2} />
+                                                                        <circle cx={0} cy={0} r={isSelected ? 13 : 11} fill={isSelected ? (isHalf ? '#f59e0b' : '#3b82f6') : '#e2e8f0'} stroke={isSelected ? (isHalf ? '#d97706' : '#2563eb') : '#cbd5e1'} strokeWidth={2} />
                                                                         <foreignObject x={-13} y={-13} width={26} height={26}>
-                                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{h}</div>
+                                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isHalf ? '8px' : '10px', fontWeight: 'bold', color: isSelected ? 'white' : '#475569', userSelect: 'none', lineHeight: 1 }}>{isHalf ? (h + 0.5) : h}</div>
                                                                         </foreignObject>
                                                                     </g>
                                                                 );
