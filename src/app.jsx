@@ -2524,7 +2524,7 @@ export function App() {
                                     >
                                             <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || ((group.type === 'breastNodule' || group.type === 'thyroidNodule') && editingGroupName?.groupId === group.id && editingGroupName?.side === 'left')) && (
+                                                {(editingGroupsLeft || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || (((group.type === 'breastNodule' || group.type === 'thyroidNodule') || group.name === '乳房結節' || group.name === '甲狀腺結節') && editingGroupName?.groupId === group.id && editingGroupName?.side === 'left')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -2543,7 +2543,7 @@ export function App() {
                                                     <input
                                                         autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
-                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule' || group.type === 'thyroidNodule'
+                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') || group.type === 'breastNodule' || group.type === 'thyroidNodule' || group.name === '乳房結節' || group.name === '甲狀腺結節'
                                                                 ? '' 
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
@@ -2564,7 +2564,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule') ? setEditingGroupName({ groupId: group.id, side: 'left', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
+                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule' || group.name === '乳房結節' || group.name === '甲狀腺結節') ? setEditingGroupName({ groupId: group.id, side: 'left', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2573,12 +2573,12 @@ export function App() {
                                                 )}
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
-                                                {(group.type === 'breastNodule' || group.type === 'thyroidNodule') ? (
+                                                {((group.type === 'breastNodule' || group.type === 'thyroidNodule') || group.name === '乳房結節' || group.name === '甲狀腺結節') ? (
                                                     <>
                                                         {editingGroupName?.groupId === group.id && editingGroupName?.side === 'left' && (
                                                             <>
                                                                 <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
-                                                                <button onClick={() => group.type === 'breastNodule' ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                                <button onClick={() => (group.type === 'breastNodule' || group.name === '乳房結節') ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
                                                             </>
                                                         )}
                                                         {editingGroupsLeft && <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
@@ -2598,7 +2598,7 @@ export function App() {
                                                 )}
                                             </div>
                                         </div>
-                                        {group.type === 'breastNodule' ? (
+                                        {(group.type === 'breastNodule' || group.name === '乳房結節') ? (
                                             <div className="grid grid-cols-2 gap-4 mt-2">
                                                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">尺寸 (cm)</p>
@@ -2787,7 +2787,7 @@ export function App() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ) : group.type === 'thyroidNodule' ? (
+                                        ) : (group.type === 'thyroidNodule' || group.name === '甲狀腺結節') ? (
                                             <div className="rounded-lg border border-slate-200 bg-white p-0.5 grid grid-cols-2 min-h-[140px]">
                                                 <div className="flex items-center justify-center min-w-0">
                                                     <div className="relative" style={{ width: 'min(200px, 90%)', aspectRatio: '480/374' }}>
@@ -2919,7 +2919,7 @@ export function App() {
                                     >
                                             <div className="flex justify-between items-baseline mb-3">
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || ((group.type === 'breastNodule' || group.type === 'thyroidNodule') && editingGroupName?.groupId === group.id && editingGroupName?.side === 'right')) && (
+                                                {(editingGroupsRight || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || (((group.type === 'breastNodule' || group.type === 'thyroidNodule') || group.name === '乳房結節' || group.name === '甲狀腺結節') && editingGroupName?.groupId === group.id && editingGroupName?.side === 'right')) && (
                                                     <span
                                                         draggable
                                                         onDragStart={(e) => {
@@ -2938,7 +2938,7 @@ export function App() {
                                                     <input
                                                         autoFocus
                                                         className={`text-sm font-bold text-slate-700 bg-transparent outline-none flex-1 mr-2 min-w-0 ${
-                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule' || group.type === 'thyroidNodule'
+                                                            (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') || group.type === 'breastNodule' || group.type === 'thyroidNodule' || group.name === '乳房結節' || group.name === '甲狀腺結節'
                                                                 ? '' 
                                                                 : 'border-b-2 border-blue-500'
                                                         }`}
@@ -2959,7 +2959,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule') ? setEditingGroupName({ groupId: group.id, side: 'right', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
+                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule' || group.name === '乳房結節' || group.name === '甲狀腺結節') ? setEditingGroupName({ groupId: group.id, side: 'right', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2968,12 +2968,12 @@ export function App() {
                                                 )}
                                             </div>
                                             <div className="flex items-baseline gap-1 shrink-0">
-                                                {(group.type === 'breastNodule' || group.type === 'thyroidNodule') ? (
+                                                {((group.type === 'breastNodule' || group.type === 'thyroidNodule') || group.name === '乳房結節' || group.name === '甲狀腺結節') ? (
                                                     <>
                                                         {editingGroupName?.groupId === group.id && editingGroupName?.side === 'right' && (
                                                             <>
                                                                 <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
-                                                                <button onClick={() => group.type === 'breastNodule' ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
+                                                                <button onClick={() => (group.type === 'breastNodule' || group.name === '乳房結節') ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
                                                             </>
                                                         )}
                                                         {editingGroupsRight && <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
@@ -2993,7 +2993,7 @@ export function App() {
                                                 )}
                                             </div>
                                         </div>
-                                        {group.type === 'breastNodule' ? (
+                                        {(group.type === 'breastNodule' || group.name === '乳房結節') ? (
                                             <div className="grid grid-cols-2 gap-4 mt-2">
                                                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                                                     <p className="text-xs font-bold text-slate-600 mb-2">尺寸 (cm)</p>
@@ -3169,7 +3169,7 @@ export function App() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ) : group.type === 'thyroidNodule' ? (
+                                        ) : (group.type === 'thyroidNodule' || group.name === '甲狀腺結節') ? (
                                             <div className="rounded-lg border border-slate-200 bg-white p-0.5 grid grid-cols-2 min-h-[140px]">
                                                 <div className="flex items-center justify-center min-w-0">
                                                     <div className="relative" style={{ width: 'min(200px, 90%)', aspectRatio: '480/374' }}>
