@@ -1601,6 +1601,10 @@ export function App() {
             if (key === '.') {
                 const delLast = (s) => {
                     if (!s) return '';
+                    if (s.endsWith('.')) {
+                        const stripped = s.slice(0, -1);
+                        return stripped.length <= 1 ? '' : stripped;
+                    }
                     if (s.includes('.')) {
                         const intPart = s.split('.')[0] || '';
                         return intPart ? intPart + '.' : '';
