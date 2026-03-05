@@ -1538,24 +1538,25 @@ export function App() {
         return parseFloat(`0.${str}`) || 0; // 乳房：短按單鍵=0.x
     };
 
-    const generateNoduleTexts = (nodules, dist) => {
+    const generateNoduleTexts = (nodules) => {
         const groups = {};
         const order = [];
         for (const n of nodules) {
-            const key = String(n.clock);
-            if (!groups[key]) { groups[key] = { clock: n.clock, items: [] }; order.push(key); }
+            const key = String(n.clock) + '|' + (n.dist || '0');
+            if (!groups[key]) { groups[key] = { clock: n.clock, dist: n.dist || '0', items: [] }; order.push(key); }
             groups[key].items.push(n);
         }
         const lines = [];
         for (const key of order) {
             const g = groups[key];
+            const groupDist = g.dist;
             if (g.items.length === 1) {
                 const { w, h } = g.items[0];
                 let text = breastNoduleSentenceTemplate
                     .replace(/\{W\}/g, formatNoduleSize(w))
                     .replace(/\{H\}/g, formatNoduleSize(h))
                     .replace(/\{C\}/g, String(g.clock))
-                    .replace(/\{D\}/g, '/' + dist + ' cm');
+                    .replace(/\{D\}/g, '/' + groupDist + ' cm');
                 if (w >= 1 || h >= 1) {
                     text = text.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
                 }
@@ -1566,7 +1567,7 @@ export function App() {
                 let text = breastNoduleMergedTemplate
                     .replace(/\{SIZES\}/g, sizes)
                     .replace(/\{C\}/g, String(g.clock))
-                    .replace(/\{D\}/g, '/' + dist + ' cm');
+                    .replace(/\{D\}/g, '/' + groupDist + ' cm');
                 if (anyLarge) {
                     text = text.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
                 }
@@ -2708,7 +2709,7 @@ export function App() {
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
                                                                                 if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
                                                                                 let textToCopy = breastNodulePendingTexts.length > 0
-                                                                                    ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c }], String(numericDist)).join('\n')
+                                                                                    ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c, dist: String(numericDist) }]).join('\n')
                                                                                     : singleText;
                                                                                 if (textToCopy) {
                                                                                     const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
@@ -2719,7 +2720,6 @@ export function App() {
                                                                                 setTimeout(() => setLastDistKeyPressed(null), 1000);
                                                                                 return;
                                                                             }
-                                                                            // M 鍵：若尺寸/方位/距離未完整，不反白也不觸發任何動作
                                                                             if (k === 'M') {
                                                                                 const w = parseSizeValue(breastNoduleGroupParams.sizeWStr);
                                                                                 const h = parseSizeValue(breastNoduleGroupParams.sizeHStr);
@@ -2739,18 +2739,20 @@ export function App() {
                                                                             let newDistStr = baseDistStr;
                                                                             // 更新距離 state（數字鍵=重設，N/M 不改距離）
                                                                             if (['4','5','6','1','2','3'].includes(k)) {
-                                                                                newDistStr = k; // 數字鍵一律視為重新輸入距離（單一位數）
+                                                                                newDistStr = k;
                                                                                 setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            } else if (k === 'N') {
+                                                                                newDistStr = 'N';
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: 'N' }));
                                                                             }
                                                                             const c = breastNoduleGroupParams.clock;
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
-                                                                            const dist = k === 'N' ? 'N' : String(numericDist);
+                                                                            const dist = k === 'N' ? 'N' : (newDistStr === 'N' ? 'N' : String(numericDist));
                                                                             let singleText = breastNoduleSentenceTemplate
                                                                                 .replace(/\{W\}/g, formatNoduleSize(w))
                                                                                 .replace(/\{H\}/g, formatNoduleSize(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
-                                                                            // 長或寬任一 >= 1 時，自動移除 "small"
                                                                             if (w >= 1 || h >= 1) {
                                                                                 singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
                                                                             }
@@ -2758,7 +2760,7 @@ export function App() {
 
                                                                             if (k === 'M') {
                                                                                 textToCopy = null;
-                                                                                const noduleData = { w, h, clock: c };
+                                                                                const noduleData = { w, h, clock: c, dist };
                                                                                 setBreastNodulePendingTexts(prev => {
                                                                                     if (prev.length > 0) {
                                                                                         const last = prev[prev.length - 1];
@@ -2772,19 +2774,19 @@ export function App() {
                                                                                     sizeWStr: '0',
                                                                                     sizeHStr: '0',
                                                                                     clock: null,
+                                                                                    distStr: '0',
                                                                                     activeField: 'sizeW',
                                                                                     reEnterPending: true
                                                                                 }));
                                                                             } else if (breastNodulePendingTexts.length > 0 && k !== '.') {
-                                                                                const allNodules = [...breastNodulePendingTexts, { w, h, clock: c }];
-                                                                                const allLines = generateNoduleTexts(allNodules, dist);
+                                                                                const allNodules = [...breastNodulePendingTexts, { w, h, clock: c, dist }];
+                                                                                const allLines = generateNoduleTexts(allNodules);
                                                                                 textToCopy = allLines.join('\n');
                                                                                 setBreastNodulePendingTexts(allNodules);
                                                                             }
                                                                             if (textToCopy) {
                                                                                 const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
                                                                                 const finalText = lines.join('\n');
-                                                                                // 只複製到剪貼簿，不顯示「已複製到剪貼簿」提示
                                                                                 if (navigator.clipboard && navigator.clipboard.writeText) {
                                                                                     navigator.clipboard.writeText(finalText).catch(() => {
                                                                                         const ta = document.createElement('textarea'); ta.value = finalText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
@@ -3103,7 +3105,7 @@ export function App() {
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
                                                                                 if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
                                                                                 let textToCopy = breastNodulePendingTexts.length > 0
-                                                                                    ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c }], String(numericDist)).join('\n')
+                                                                                    ? generateNoduleTexts([...breastNodulePendingTexts, { w, h, clock: c, dist: String(numericDist) }]).join('\n')
                                                                                     : singleText;
                                                                                 if (textToCopy) {
                                                                                     const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
@@ -3132,10 +3134,13 @@ export function App() {
                                                                             if (['4','5','6','1','2','3'].includes(k)) {
                                                                                 newDistStr = k;
                                                                                 setBreastNoduleGroupParams(p => ({ ...p, distStr: newDistStr }));
+                                                                            } else if (k === 'N') {
+                                                                                newDistStr = 'N';
+                                                                                setBreastNoduleGroupParams(p => ({ ...p, distStr: 'N' }));
                                                                             }
                                                                             const c = breastNoduleGroupParams.clock;
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
-                                                                            const dist = k === 'N' ? 'N' : String(numericDist);
+                                                                            const dist = k === 'N' ? 'N' : (newDistStr === 'N' ? 'N' : String(numericDist));
                                                                             let singleText = breastNoduleSentenceTemplate
                                                                                 .replace(/\{W\}/g, formatNoduleSize(w))
                                                                                 .replace(/\{H\}/g, formatNoduleSize(h))
@@ -3148,7 +3153,7 @@ export function App() {
 
                                                                             if (k === 'M') {
                                                                                 textToCopy = null;
-                                                                                const noduleData = { w, h, clock: c };
+                                                                                const noduleData = { w, h, clock: c, dist };
                                                                                 setBreastNodulePendingTexts(prev => {
                                                                                     if (prev.length > 0) {
                                                                                         const last = prev[prev.length - 1];
@@ -3162,12 +3167,13 @@ export function App() {
                                                                                     sizeWStr: '0',
                                                                                     sizeHStr: '0',
                                                                                     clock: null,
+                                                                                    distStr: '0',
                                                                                     activeField: 'sizeW',
                                                                                     reEnterPending: true
                                                                                 }));
                                                                             } else if (breastNodulePendingTexts.length > 0 && k !== '.') {
-                                                                                const allNodules = [...breastNodulePendingTexts, { w, h, clock: c }];
-                                                                                const allLines = generateNoduleTexts(allNodules, dist);
+                                                                                const allNodules = [...breastNodulePendingTexts, { w, h, clock: c, dist }];
+                                                                                const allLines = generateNoduleTexts(allNodules);
                                                                                 textToCopy = allLines.join('\n');
                                                                                 setBreastNodulePendingTexts(allNodules);
                                                                             }
