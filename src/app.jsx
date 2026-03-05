@@ -571,6 +571,9 @@ export function App() {
             // 因為編輯視窗的點擊不應該觸發關閉邏輯
             if (editingTemplate) return;
             
+            // 若點在乳房/甲狀腺結節的句子模板編輯視窗內，不關閉
+            if (event.target.closest('[data-sentence-template-modal]') || event.target.closest('[data-thyroid-sentence-modal]')) return;
+            
             // 如果點擊在刪除確認視窗內，不關閉編輯組套模式
             const deleteConfirmModal = event.target.closest('[data-delete-confirm-modal]');
             if (deleteConfirmModal) return;
@@ -2564,7 +2567,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule' || group.name === '乳房結節' || group.name === '甲狀腺結節') ? setEditingGroupName({ groupId: group.id, side: 'left', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
+                                                        onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'left' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2575,13 +2578,13 @@ export function App() {
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {((group.type === 'breastNodule' || group.type === 'thyroidNodule') || group.name === '乳房結節' || group.name === '甲狀腺結節') ? (
                                                     <>
-                                                        {editingGroupName?.groupId === group.id && editingGroupName?.side === 'left' && (
+                                                        {((editingGroupName?.groupId === group.id && editingGroupName?.side === 'left') || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left')) && (
                                                             <>
                                                                 <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                                 <button onClick={() => (group.type === 'breastNodule' || group.name === '乳房結節') ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
                                                             </>
                                                         )}
-                                                        {editingGroupsLeft && <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
+                                                        {editingGroupsLeft && !(editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left') && <button onClick={() => showDeleteGroupConfirm(group.id, 'left')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
                                                     </>
                                                 ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'left' ? (
                                                     <>
@@ -2959,7 +2962,7 @@ export function App() {
                                                     />
                                                 ) : (
                                                     <span
-                                                        onClick={() => (group.type === 'breastNodule' || group.type === 'thyroidNodule' || group.name === '乳房結節' || group.name === '甲狀腺結節') ? setEditingGroupName({ groupId: group.id, side: 'right', editing: true }) : setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
+                                                        onClick={() => setEditingTemplatesGroup({ groupId: group.id, side: 'right' })}
                                                         className="text-sm font-bold text-slate-700 truncate cursor-pointer hover:text-blue-600"
                                                         title="點擊編輯組套"
                                                     >
@@ -2970,13 +2973,13 @@ export function App() {
                                             <div className="flex items-baseline gap-1 shrink-0">
                                                 {((group.type === 'breastNodule' || group.type === 'thyroidNodule') || group.name === '乳房結節' || group.name === '甲狀腺結節') ? (
                                                     <>
-                                                        {editingGroupName?.groupId === group.id && editingGroupName?.side === 'right' && (
+                                                        {((editingGroupName?.groupId === group.id && editingGroupName?.side === 'right') || (editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right')) && (
                                                             <>
                                                                 <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>
                                                                 <button onClick={() => (group.type === 'breastNodule' || group.name === '乳房結節') ? setEditingSentenceTemplate(!editingSentenceTemplate) : setEditingThyroidSentenceTemplate(!editingThyroidSentenceTemplate)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="編輯">✏️</button>
                                                             </>
                                                         )}
-                                                        {editingGroupsRight && <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
+                                                        {editingGroupsRight && !(editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right') && <button onClick={() => showDeleteGroupConfirm(group.id, 'right')} className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded" title="刪除分組">🗑️</button>}
                                                     </>
                                                 ) : editingTemplatesGroup?.groupId === group.id && editingTemplatesGroup?.side === 'right' ? (
                                                     <>
