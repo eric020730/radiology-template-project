@@ -389,9 +389,9 @@ function ensureThyroidNoduleTypes(tabsData) {
 }
 
 // 乳房與甲狀腺結節模板的預設值
-const DEFAULT_BREAST_SENTENCE = "A {W}x{H}cm small hypoechoic nodule at {C}'{D} from nipple.";
+const DEFAULT_BREAST_SENTENCE = "A {L}x{W}cm small hypoechoic nodule at {C}'{D} from nipple.";
 const DEFAULT_BREAST_MERGED = "Some small hypoechoic nodules ({SIZES}) at {C}'{D} from nipple.";
-const DEFAULT_THYROID_SENTENCE = "A {W}x{H}cm hypoechoic nodule at {SIDE} lobe of thyroid gland.";
+const DEFAULT_THYROID_SENTENCE = "A {L}x{W}cm hypoechoic nodule at {SIDE} lobe of thyroid gland.";
 const DEFAULT_THYROID_MERGED = "Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.";
 const DEFAULT_THYROID_MULTI_EXAMPLE = "Several hypoechoic nodules ({SIZES}) at {SIDE} lobe of thyroid gland.";
 
@@ -1553,8 +1553,8 @@ export function App() {
             if (g.items.length === 1) {
                 const { w, h } = g.items[0];
                 let text = breastNoduleSentenceTemplate
-                    .replace(/\{W\}/g, formatNoduleSize(w))
-                    .replace(/\{H\}/g, formatNoduleSize(h))
+                    .replace(/\{L\}|\{長\}/g, formatNoduleSize(w))
+                    .replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                     .replace(/\{C\}/g, String(g.clock))
                     .replace(/\{D\}/g, '/' + groupDist + ' cm');
                 if (w >= 1 || h >= 1) {
@@ -1596,14 +1596,14 @@ export function App() {
             const { activeField, sizeWStr, sizeHStr, distStr } = p;
             const odm = breastOnesDigitModeRef.current;
 
-            // . 鍵 = 刪除上一個數字（倒退鍵）。有小數時一次刪除整個小數部分
-            // 乳房：刪除後若得整數，存成 "2." 形式避免被 formatSizeDisplay 誤顯示為 0.2
+            // . 鍵 = 刪除上一個數字（倒退鍵）。有小數時一次刪掉整個小數（1.1→1）
+            // 乳房模式：刪完小數後存成 "1." 形式，避免單一數字被當成 0.1
             if (key === '.') {
                 const delLast = (s) => {
                     if (!s) return '';
                     if (s.includes('.')) {
                         const intPart = s.split('.')[0] || '';
-                        return intPart ? intPart + '.' : ''; // "2.3"→"2." 以保留整數 2
+                        return intPart ? intPart + '.' : '';
                     }
                     return s.slice(0, -1) || '';
                 };
@@ -1616,7 +1616,7 @@ export function App() {
                 }
                 if (activeField === 'sizeH') {
                     const cur = sizeHStr || '';
-                    if (cur) {
+                    if (cur && cur !== '0') {
                         const next = delLast(cur);
                         return { ...p, sizeHStr: next || '0' };
                     }
@@ -1863,7 +1863,7 @@ export function App() {
             const useMultiExample = nodules.length > 3 || forceMultiExample;
             const template = nodulesForOutput.length === 1 ? thyroidNoduleSentenceTemplate : (nodulesForOutput.length <= 3 && !useMultiExample) ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
             const line = nodulesForOutput.length === 1
-                ? template.split('{W}').join(formatNoduleSize(nodulesForOutput[0].w)).split('{H}').join(formatNoduleSize(nodulesForOutput[0].h)).split('{SIDE}').join(side)
+                ? (template.includes('{H}') ? template.replace(/\{W\}/g, formatNoduleSize(nodulesForOutput[0].w)).replace(/\{H\}/g, formatNoduleSize(nodulesForOutput[0].h)) : template.replace(/\{L\}/g, formatNoduleSize(nodulesForOutput[0].w)).replace(/\{W\}/g, formatNoduleSize(nodulesForOutput[0].h))).replace(/\{SIDE\}/g, side)
                 : template.split('{SIZES}').join(sizes).split('{SIDE}').join(side);
             outputLines.push(...line.split('\n').filter(l => l.trim() !== ''));
         }
@@ -1903,7 +1903,7 @@ export function App() {
             const tmpl = nodulesForOutput.length === 1 ? thyroidNoduleSentenceTemplate : (nodulesForOutput.length <= 3 && !useMultiExample) ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
             let line;
             if (nodulesForOutput.length === 1) {
-                line = tmpl.split('{W}').join(formatNoduleSize(nodulesForOutput[0].w)).split('{H}').join(formatNoduleSize(nodulesForOutput[0].h)).split('{SIDE}').join(side);
+                line = (tmpl.includes('{H}') ? tmpl.replace(/\{W\}/g, formatNoduleSize(nodulesForOutput[0].w)).replace(/\{H\}/g, formatNoduleSize(nodulesForOutput[0].h)) : tmpl.replace(/\{L\}/g, formatNoduleSize(nodulesForOutput[0].w)).replace(/\{W\}/g, formatNoduleSize(nodulesForOutput[0].h))).replace(/\{SIDE\}/g, side);
             } else {
                 const sizes = nodulesForOutput.map(n => `${formatNoduleSize(n.w)}x${formatNoduleSize(n.h)}cm`).join(', ');
                 line = tmpl.split('{SIZES}').join(sizes).split('{SIDE}').join(side);
@@ -1992,10 +1992,8 @@ export function App() {
                 const tmpl = nodulesForOutput.length <= 3 && !useMultiExample ? thyroidNoduleMergedTemplate : thyroidNoduleMultiExampleTemplate;
                 textToCopy = tmpl.replace(/\{SIZES\}/g, sizes).replace(/\{SIDE\}/g, lobeSide);
             } else {
-                textToCopy = thyroidNoduleSentenceTemplate
-                    .replace(/\{W\}/g, formatNoduleSize(w))
-                    .replace(/\{H\}/g, formatNoduleSize(h))
-                    .replace(/\{SIDE\}/g, lobeSide);
+                const thTpl = thyroidNoduleSentenceTemplate;
+                textToCopy = (thTpl.includes('{H}') ? thTpl.replace(/\{W\}/g, formatNoduleSize(w)).replace(/\{H\}/g, formatNoduleSize(h)) : thTpl.replace(/\{L\}/g, formatNoduleSize(w)).replace(/\{W\}/g, formatNoduleSize(h))).replace(/\{SIDE\}/g, lobeSide);
             }
             const lines = textToCopy.split('\n').filter(l => l.trim() !== '');
             const finalText = lines.join('\n');
@@ -2704,7 +2702,7 @@ export function App() {
                                                                                 const c = breastNoduleGroupParams.clock;
                                                                                 const numericDist = parseFloat(newDistStr) || 0;
                                                                                 let singleText = breastNoduleSentenceTemplate
-                                                                                    .replace(/\{W\}/g, formatNoduleSize(w)).replace(/\{H\}/g, formatNoduleSize(h))
+                                                                                    .replace(/\{L\}|\{長\}/g, formatNoduleSize(w)).replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                                                                                     .replace(/\{C\}/g, String(c))
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
                                                                                 if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
@@ -2749,8 +2747,8 @@ export function App() {
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
                                                                             const dist = k === 'N' ? 'N' : (newDistStr === 'N' ? 'N' : String(numericDist));
                                                                             let singleText = breastNoduleSentenceTemplate
-                                                                                .replace(/\{W\}/g, formatNoduleSize(w))
-                                                                                .replace(/\{H\}/g, formatNoduleSize(h))
+                                                                                .replace(/\{L\}|\{長\}/g, formatNoduleSize(w))
+                                                                                .replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             if (w >= 1 || h >= 1) {
@@ -3100,7 +3098,7 @@ export function App() {
                                                                                 const c = breastNoduleGroupParams.clock;
                                                                                 const numericDist = parseFloat(newDistStr) || 0;
                                                                                 let singleText = breastNoduleSentenceTemplate
-                                                                                    .replace(/\{W\}/g, formatNoduleSize(w)).replace(/\{H\}/g, formatNoduleSize(h))
+                                                                                    .replace(/\{L\}|\{長\}/g, formatNoduleSize(w)).replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                                                                                     .replace(/\{C\}/g, String(c))
                                                                                     .replace(/\{D\}/g, '/' + numericDist + ' cm');
                                                                                 if (w >= 1 || h >= 1) singleText = singleText.replace(/\bsmall\b/gi, '').replace(/\s{2,}/g, ' ');
@@ -3142,8 +3140,8 @@ export function App() {
                                                                             const numericDist = parseFloat(newDistStr || baseDistStr) || 0;
                                                                             const dist = k === 'N' ? 'N' : (newDistStr === 'N' ? 'N' : String(numericDist));
                                                                             let singleText = breastNoduleSentenceTemplate
-                                                                                .replace(/\{W\}/g, formatNoduleSize(w))
-                                                                                .replace(/\{H\}/g, formatNoduleSize(h))
+                                                                                .replace(/\{L\}|\{長\}/g, formatNoduleSize(w))
+                                                                                .replace(/\{W\}|\{寬\}/g, formatNoduleSize(h))
                                                                                 .replace(/\{C\}/g, String(c))
                                                                                 .replace(/\{D\}/g, '/' + dist + ' cm');
                                                                             if (w >= 1 || h >= 1) {
@@ -3353,7 +3351,7 @@ export function App() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">可用變數</label>
-                                <p className="text-sm text-slate-500 mb-2">{'{W}'} = 長、{'{H}'} = 寬、{'{C}'} = 鐘點、{'{D}'} = 距離、{'{SIZES}'} = 合併尺寸列表</p>
+                                <p className="text-sm text-slate-500 mb-2">{'{L}'} = 長、{'{W}'} = 寬、{'{C}'} = 鐘點、{'{D}'} = 距離、{'{SIZES}'} = 合併尺寸列表</p>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">單顆結節模板</label>
@@ -3392,7 +3390,7 @@ export function App() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">可用變數</label>
-                                <p className="text-sm text-slate-500 mb-2">{'{W}'} = 長、{'{H}'} = 寬、{'{SIDE}'} = 左/右葉、{'{SIZES}'} = 合併尺寸列表</p>
+                                <p className="text-sm text-slate-500 mb-2">{'{L}'} = 長、{'{W}'} = 寬、{'{SIDE}'} = 左/右葉、{'{SIZES}'} = 合併尺寸列表</p>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">單顆結節模板</label>
