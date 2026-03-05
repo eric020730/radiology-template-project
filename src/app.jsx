@@ -1585,6 +1585,10 @@ export function App() {
             breastOnesDigitModeRef.current = { sizeW: false, sizeH: false };
             setBreastOnesDigitTriggerKey(null);
             setBreastNoduleGroupParams({ sizeWStr: '0', sizeHStr: '0', clock: null, distStr: '0', activeField: null, reEnterPending: false });
+            // 同時清除剪貼簿中剛複製的結節句子
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText('').catch(() => {});
+            }
             return;
         }
         setBreastNoduleGroupParams((p) => {
