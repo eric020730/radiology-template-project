@@ -2901,6 +2901,15 @@ export function App() {
                                                     尚無組套
                                                 </div>
                                             )}
+                                            {dragState && group.items.length > 0 && (
+                                                <div
+                                                    data-drop-zone
+                                                    data-side="left"
+                                                    data-group-id={group.id}
+                                                    data-index={group.items.length}
+                                                    className={`min-h-[3rem] rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${dropTarget?.side === 'left' && dropTarget?.groupId === group.id && dropTarget?.index === group.items.length ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/80 border-blue-300' : 'border-slate-300 bg-slate-50/50'}`}
+                                                />
+                                            )}
                                         </div>
                                         )}
                                     </div>
@@ -2908,7 +2917,24 @@ export function App() {
                                 })}
                             </div>
                         )}
-                        <div className="flex justify-center pt-2">
+                        <div
+                            className={`flex justify-center pt-2 min-h-[2.5rem] transition-colors rounded-lg ${dragGroupState && dropGroupTarget?.side === 'left' && dropGroupTarget?.index === (activeTab.left?.length ?? 0) ? 'bg-blue-50/80' : ''}`}
+                            onDragOver={(e) => {
+                                if (!dragGroupState || !activeTab.left?.length) return;
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                                setDropGroupTarget({ side: 'left', index: activeTab.left.length });
+                            }}
+                            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropGroupTarget(null); }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                if (!dragGroupState || dropGroupTarget?.side !== 'left' || dropGroupTarget?.index !== activeTab.left?.length) return;
+                                if (dragGroupState.side === 'left') reorderGroups('left', dragGroupState.index, activeTab.left.length);
+                                else moveGroupBetweenSides('right', dragGroupState.index, 'left', activeTab.left.length);
+                                setDragGroupState(null);
+                                setDropGroupTarget(null);
+                            }}
+                        >
                             <button type="button" onClick={() => addGroup('left')} className="text-lg font-semibold text-slate-400 hover:text-slate-700" title="新增分組">＋</button>
                         </div>
                     </div>
@@ -3291,6 +3317,15 @@ export function App() {
                                                     尚無組套
                                                 </div>
                                             )}
+                                            {dragState && group.items.length > 0 && (
+                                                <div
+                                                    data-drop-zone
+                                                    data-side="right"
+                                                    data-group-id={group.id}
+                                                    data-index={group.items.length}
+                                                    className={`min-h-[3rem] rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${dropTarget?.side === 'right' && dropTarget?.groupId === group.id && dropTarget?.index === group.items.length ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/80 border-blue-300' : 'border-slate-300 bg-slate-50/50'}`}
+                                                />
+                                            )}
                                         </div>
                                         )}
                                     </div>
@@ -3298,7 +3333,24 @@ export function App() {
                                 })}
                             </div>
                         )}
-                        <div className="flex justify-center pt-2">
+                        <div
+                            className={`flex justify-center pt-2 min-h-[2.5rem] transition-colors rounded-lg ${dragGroupState && dropGroupTarget?.side === 'right' && dropGroupTarget?.index === (activeTab.right?.length ?? 0) ? 'bg-blue-50/80' : ''}`}
+                            onDragOver={(e) => {
+                                if (!dragGroupState || !activeTab.right?.length) return;
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                                setDropGroupTarget({ side: 'right', index: activeTab.right.length });
+                            }}
+                            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropGroupTarget(null); }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                if (!dragGroupState || dropGroupTarget?.side !== 'right' || dropGroupTarget?.index !== activeTab.right?.length) return;
+                                if (dragGroupState.side === 'right') reorderGroups('right', dragGroupState.index, activeTab.right.length);
+                                else moveGroupBetweenSides('left', dragGroupState.index, 'right', activeTab.right.length);
+                                setDragGroupState(null);
+                                setDropGroupTarget(null);
+                            }}
+                        >
                             <button type="button" onClick={() => addGroup('right')} className="text-lg font-semibold text-slate-400 hover:text-slate-700" title="新增分組">＋</button>
                         </div>
                     </div>
