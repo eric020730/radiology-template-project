@@ -248,15 +248,15 @@ function TemplateButton({ template, side, groupId, index, showEditButtons, ctx }
                                         title="替換為 Enlarged" style={{ width: '20px', height: '20px' }}>大</button>
                                 </div>
                                 <div className="flex items-center gap-[4px]">
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyPIO(template, 'O', templateKey); }}
+                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${cf.pio?.includes('O') ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
+                                        title="O" style={{ width: '20px', height: '20px' }}>O</button>
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyPIO(template, 'P', templateKey); }}
                                         className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${cf.pio?.includes('P') ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="P" style={{ width: '20px', height: '20px' }}>P</button>
                                     <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyPIO(template, 'I', templateKey); }}
                                         className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${cf.pio?.includes('I') ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
                                         title="I" style={{ width: '20px', height: '20px' }}>I</button>
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); copyPIO(template, 'O', templateKey); }}
-                                        className={`text-[10px] font-bold rounded transition-all z-10 relative flex items-center justify-center shrink-0 ${cf.pio?.includes('O') ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'}`}
-                                        title="O" style={{ width: '20px', height: '20px' }}>O</button>
                                 </div>
                             </div>
                             );
