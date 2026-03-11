@@ -2918,7 +2918,7 @@ export function App() {
                             </div>
                         )}
                         <div
-                            className={`flex justify-center pt-2 min-h-[2.5rem] transition-colors rounded-lg ${dragGroupState && dropGroupTarget?.side === 'left' && dropGroupTarget?.index === (activeTab.left?.length ?? 0) ? 'bg-blue-50/80' : ''}`}
+                            className={`flex items-center justify-center min-h-[2.5rem] transition-colors rounded-lg ${dragGroupState && dropGroupTarget?.side === 'left' && dropGroupTarget?.index === (activeTab.left?.length ?? 0) ? 'bg-blue-50/80' : ''}`}
                             onDragOver={(e) => {
                                 if (!dragGroupState || !activeTab.left?.length) return;
                                 e.preventDefault();
@@ -3334,7 +3334,7 @@ export function App() {
                             </div>
                         )}
                         <div
-                            className={`flex justify-center pt-2 min-h-[2.5rem] transition-colors rounded-lg ${dragGroupState && dropGroupTarget?.side === 'right' && dropGroupTarget?.index === (activeTab.right?.length ?? 0) ? 'bg-blue-50/80' : ''}`}
+                            className={`flex items-center justify-center min-h-[2.5rem] transition-colors rounded-lg ${dragGroupState && dropGroupTarget?.side === 'right' && dropGroupTarget?.index === (activeTab.right?.length ?? 0) ? 'bg-blue-50/80' : ''}`}
                             onDragOver={(e) => {
                                 if (!dragGroupState || !activeTab.right?.length) return;
                                 e.preventDefault();
