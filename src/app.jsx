@@ -1181,9 +1181,15 @@ export function App() {
         } else if (side === 'bilateral') {
             // B 按鈕：當內容中有 right/bilateral 時，將 right/ 刪除只留下 bilateral，並在 bilateral 後面第一個單字字尾加小寫 s
             if (hasRightSlashBilateral) {
-                textToCopy = textToCopy.replace(/\bright\s*\/\s*bilateral\b/gi, 'bilateral');
+                textToCopy = textToCopy.replace(/\bright\s*\/\s*bilateral\b/gi, (match, offset, full) => {
+                    const before = full.slice(0, offset);
+                    const isSentenceStart = offset === 0 || /[.!?\n]\s*$/.test(before);
+                    return isSentenceStart ? 'Bilateral' : 'bilateral';
+                });
                 // bilateral 後面的每個單字字尾加小寫 s（例：bilateral wrist. → bilateral wrists.）
-                textToCopy = textToCopy.replace(/\bbilateral\b\s+(\w+)/gi, (_match, word) => 'bilateral ' + word + 's');
+                textToCopy = textToCopy.replace(/\b(bilateral|Bilateral)\b\s+(\w+)/gi, (_m, bi, word) => bi + ' ' + word + 's');
+                // 將句首第一個字母大寫（例如 "bilateral breast" → "Bilateral breast"）
+                textToCopy = textToCopy.replace(/^(\s*)([a-z])/, (_, spaces, first) => spaces + first.toUpperCase());
             } else {
                 // 如果沒有 right/bilateral，複製原始內容
                 textToCopy = template.content;
